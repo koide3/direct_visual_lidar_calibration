@@ -1,0 +1,3 @@
+[submodule "thirdparty/Bonxai"]
+	path = thirdparty/Bonxai
+	url = https://github.com/facontidavide/Bonxai.git

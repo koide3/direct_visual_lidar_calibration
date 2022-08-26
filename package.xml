@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>direct_visual_lidar_calibration</name>
+  <version>0.0.0</version>
+  <description>The direct_visual_lidar_calibration package</description>
+
+  <maintainer email="k.koide@aist.go.jp">k.koide</maintainer>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>glim</depend>
+  <depend>rosbag</depend>
+  <depend>sensor_msgs</depend>
+
+  <export>
+  </export>
+</package>
