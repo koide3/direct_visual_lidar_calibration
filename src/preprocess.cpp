@@ -25,6 +25,10 @@
 #include <vlcal/preprocess/static_point_cloud_integrator.hpp>
 #include <vlcal/preprocess/dynamic_point_cloud_integrator.hpp>
 
+#include <glk/texture_opencv.hpp>
+#include <glk/pointcloud_buffer.hpp>
+#include <guik/viewer/light_viewer.hpp>
+
 /**
  * @brief
  */
@@ -220,16 +224,17 @@ std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> get_image_and_points(
     const auto image_msg = m.instantiate<sensor_msgs::Image>();
     const auto compressed_image_msg = m.instantiate<sensor_msgs::CompressedImage>();
     if (image_msg) {
-      image = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
+      image = cv_bridge::toCvCopy(image_msg, "mono8")->image;
       break;
     } else if (compressed_image_msg) {
-      image = cv_bridge::toCvCopy(compressed_image_msg, "bgr8")->image;
+      image = cv_bridge::toCvCopy(compressed_image_msg, "mono8")->image;
       break;
     }
 
     std::cerr << glim::console::bold_yellow << "warning: failed to instantiate image msg on " << image_topic << glim::console::reset << std::endl;
     std::cerr << glim::console::bold_yellow << "       : bag_filename=" << bag_filename << glim::console::reset << std::endl;
   }
+  cv::equalizeHist(image.clone(), image);
 
   // integrate points
   glim::TimeKeeper time_keeper;
@@ -262,7 +267,20 @@ std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> get_image_and_points(
     points_integrator->insert_points(points);
   }
 
-  return {image, points_integrator->get_points()};
+  auto points = points_integrator->get_points();
+
+  // histrogram equalization
+  std::vector<int> indices(points->size());
+  std::iota(indices.begin(), indices.end(), 0);
+  std::sort(indices.begin(), indices.end(), [&](const int lhs, const int rhs) { return points->intensities[lhs] < points->intensities[rhs]; });
+
+  const int bins = 256;
+  for (int i = 0; i < indices.size(); i++) {
+    const double value = std::floor(bins * static_cast<double>(i) / indices.size()) / bins;
+    points->intensities[indices[i]] = value;
+  }
+
+  return {image, points};
 }
 
 /**
@@ -287,6 +305,7 @@ int main(int argc, char** argv) {
     ("camera_intrinsics", value<std::string>(), "camera intrinsic parameters [fx,fy,cx,cy(,xi)]")
     ("camera_distortion_coeffs", value<std::string>(), "camera distortion parameters [k1 k2 p1 p2 k3]")
     ("voxel_resolution", value<double>()->default_value(0.002), "voxel grid resolution")
+    ("visualize,v", "if true, show extracted images and points")
   ;
   // clang-format on
 
@@ -347,15 +366,14 @@ int main(int argc, char** argv) {
   std::cout << "dist_coeffs : " << Eigen::Map<const Eigen::VectorXd>(distortion_coeffs.data(), distortion_coeffs.size()).transpose() << std::endl;
 
   // process bags
-  std::cout << "processing images and points" << std::endl;
-
-  int num_threads = 1 + omp_get_max_threads() / bag_filenames.size();
-  num_threads = std::max(2, std::min(omp_get_max_threads(), num_threads));
+  int num_threads_per_bag = 1 + omp_get_max_threads() / bag_filenames.size();
+  num_threads_per_bag = std::max(2, std::min(omp_get_max_threads(), num_threads_per_bag));
+  std::cout << "processing images and points (num_threads_per_bag=" << num_threads_per_bag << ")" << std::endl;
 
 #pragma omp parallel for
   for (int i = 0; i < bag_filenames.size(); i++) {
     const auto& bag_filename = bag_filenames[i];
-    auto [image, points] = get_image_and_points(vm, bag_filename, image_topic, points_topic, intensity_channel, num_threads);
+    auto [image, points] = get_image_and_points(vm, bag_filename, image_topic, points_topic, intensity_channel, num_threads_per_bag);
 
     const std::string bag_name = std::filesystem::path(bag_filename).filename();
 
@@ -389,6 +407,25 @@ int main(int argc, char** argv) {
 
   std::filesystem::create_directories(dst_path);
   std::ofstream ofs(dst_path + "/calib.json");
+
+  if (vm.count("visualize")) {
+    auto viewer = guik::LightViewer::instance();
+    viewer->use_arcball_camera_control();
+
+    for (const auto& bag_filename : bag_filenames) {
+      const std::string bag_name = std::filesystem::path(bag_filename).filename();
+      const cv::Mat image = cv::imread(dst_path + "/" + bag_name + ".png");
+      const auto points = glk::load_ply(dst_path + "/" + bag_name + ".ply");
+
+      auto cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points->vertices);
+      cloud_buffer->add_intensity(glk::COLORMAP::TURBO, points->intensities);
+
+      viewer->append_text(bag_filename);
+      viewer->update_image("image", glk::create_texture(image));
+      viewer->update_drawable("points", cloud_buffer, guik::VertexColor());
+      viewer->spin_until_click();
+    }
+  }
 
   return 0;
 }

@@ -42,7 +42,9 @@ DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloud
 
 DynamicPointCloudIntegrator::~DynamicPointCloudIntegrator() {
   alignment_results.submit_end_of_data();
-  voxelgrid_thread.join();
+  if (voxelgrid_thread.joinable()) {
+    voxelgrid_thread.join();
+  }
 }
 
 void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points) {
@@ -88,7 +90,7 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
 
   gtsam_ext::LevenbergMarquardtExtParams lm_params;
   lm_params.setMaxIterations(15);
-  lm_params.set_verbose();
+  // lm_params.set_verbose();
 
   values = gtsam_ext::LevenbergMarquardtOptimizerExt(graph, values, lm_params).optimize();
 

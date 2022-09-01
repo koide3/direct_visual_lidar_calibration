@@ -30,7 +30,7 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-
+# direct_visual_lidar_calibration
 add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/preprocess/static_point_cloud_integrator.cpp
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
@@ -47,6 +47,7 @@ target_link_libraries(direct_visual_lidar_calibration
   ${Iridescence_LIBRARIES}
 )
 
+# preprocess
 add_executable(preprocess
   src/preprocess.cpp
 )
@@ -57,14 +58,3 @@ target_link_libraries(preprocess
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )
-
-# add_executable(calib
-#   src/calib.cpp
-# )
-# target_include_directories(calib PRIVATE
-#   ${catkin_INCLUDE_DIRS}
-# )
-# target_link_libraries(calib
-#   direct_visual_lidar_calibration
-#   ${catkin_LIBRARIES}
-# )
