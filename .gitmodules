@@ -1,3 +1,6 @@
 [submodule "thirdparty/Bonxai"]
 	path = thirdparty/Bonxai
 	url = https://github.com/facontidavide/Bonxai.git
+[submodule "thirdparty/json"]
+	path = thirdparty/json
+	url = https://github.com/nlohmann/json.git

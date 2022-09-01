@@ -1,4 +1,4 @@
-#include <vlcal/preprocess/point_cloud_integrator.hpp>
+#include <vlcal/preprocess/dynamic_point_cloud_integrator.hpp>
 
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
@@ -21,16 +21,16 @@
 
 namespace vlcal {
 
-PointCloudIntegratorParams::PointCloudIntegratorParams() {
+DynamicPointCloudIntegratorParams::DynamicPointCloudIntegratorParams() {
   num_threads = 16;
   k_neighbors = 20;
   target_num_points = 10000;
   voxel_resolution = 0.05;
 }
 
-PointCloudIntegratorParams::~PointCloudIntegratorParams() {}
+DynamicPointCloudIntegratorParams::~DynamicPointCloudIntegratorParams() {}
 
-PointCloudIntegrator::PointCloudIntegrator(const PointCloudIntegratorParams& params) : params(params) {
+DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloudIntegratorParams& params) : params(params) {
   last_T_odom_lidar_begin = gtsam::Pose3();
   last_T_odom_lidar_end = gtsam::Pose3();
 
@@ -40,18 +40,19 @@ PointCloudIntegrator::PointCloudIntegrator(const PointCloudIntegratorParams& par
   voxelgrid_thread = std::thread([this] { voxelgrid_task(); });
 }
 
-PointCloudIntegrator::~PointCloudIntegrator() {
+DynamicPointCloudIntegrator::~DynamicPointCloudIntegrator() {
   alignment_results.submit_end_of_data();
   voxelgrid_thread.join();
 }
 
-void PointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points) {
+void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points) {
   auto points = gtsam_ext::randomgrid_sampling(raw_points, 0.5, static_cast<double>(params.target_num_points) / raw_points->size(), mt);
+  points = gtsam_ext::sort_by_time(points);
 
   std::vector<int> neighbors(points->size() * params.k_neighbors);
 
   gtsam_ext::KdTree2<gtsam_ext::Frame> tree(points);
-#pragma omp parallel for num_threads(num_threads)
+#pragma omp parallel for num_threads(params.num_threads)
   for (int i = 0; i < points->size(); i++) {
     std::vector<size_t> k_indices(params.k_neighbors);
     std::vector<double> k_sq_dists(params.k_neighbors);
@@ -110,7 +111,7 @@ void PointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_p
   */
 }
 
-void PointCloudIntegrator::voxelgrid_task() {
+void DynamicPointCloudIntegrator::voxelgrid_task() {
   while (true) {
     auto data = alignment_results.pop_lock();
     if (!data) {
@@ -140,6 +141,7 @@ void PointCloudIntegrator::voxelgrid_task() {
       accessor.setValue(coord, Eigen::Vector4d(pt[0], pt[1], pt[2], raw_points->intensities[i]));
     }
 
+    /*
     std::vector<Eigen::Vector3f> points;
     std::vector<float> intensities;
 
@@ -148,7 +150,6 @@ void PointCloudIntegrator::voxelgrid_task() {
       intensities.emplace_back(value.w());
     });
 
-    /*
     auto viewer = guik::LightViewer::instance();
     auto cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points);
     cloud_buffer->add_intensity(glk::COLORMAP::TURBO, intensities, 1.0f / (*std::max_element(intensities.begin(), intensities.end())));
@@ -156,6 +157,23 @@ void PointCloudIntegrator::voxelgrid_task() {
     viewer->spin_once();
     */
   }
+}
+
+gtsam_ext::Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
+  alignment_results.submit_end_of_data();
+  voxelgrid_thread.join();
+
+  std::vector<Eigen::Vector3f> points;
+  std::vector<float> intensities;
+
+  voxelgrid->forEachCell([&](const Eigen::Vector4d& value, const auto& coord) {
+    points.emplace_back(value.head<3>().cast<float>());
+    intensities.emplace_back(value.w());
+  });
+
+  auto frame = std::make_shared<gtsam_ext::FrameCPU>(points);
+  frame->add_intensities(intensities);
+  return frame;
 }
 
 }  // namespace vlcal

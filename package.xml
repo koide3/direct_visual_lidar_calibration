@@ -12,6 +12,7 @@
   <depend>glim</depend>
   <depend>rosbag</depend>
   <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
 
   <export>
   </export>
