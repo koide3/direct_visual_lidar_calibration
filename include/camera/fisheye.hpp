@@ -39,7 +39,7 @@ template <>
 struct CameraModelTraits<FisheyeProjection> {
   static constexpr int num_intrinsic_params = 4;
   static constexpr int num_distortion_params = 4;
-  static constexpr double max_fov = M_PI_2;
+  static constexpr double max_fov = 80.0 * M_PI / 180.0;
 
   static std::string projection_model() { return "pinhole"; }
 

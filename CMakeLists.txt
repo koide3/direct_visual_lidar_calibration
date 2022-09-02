@@ -35,8 +35,10 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/common/create_camera.cpp
   src/vlcal/common/points_color_updater.cpp
   src/vlcal/common/visual_lidar_data.cpp
+  src/vlcal/common/visual_lidar_visualizer.cpp
   src/vlcal/preprocess/static_point_cloud_integrator.cpp
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
+  src/vlcal/calib/cost_calculator_nid.cpp
 )
 target_include_directories(direct_visual_lidar_calibration PUBLIC
   include
@@ -70,6 +72,18 @@ target_include_directories(initial_guess_manual PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
 target_link_libraries(initial_guess_manual
+  direct_visual_lidar_calibration
+  ${catkin_LIBRARIES}
+)
+
+# calibrate
+add_executable(calibrate
+  src/calibrate.cpp
+)
+target_include_directories(calibrate PRIVATE
+  ${catkin_INCLUDE_DIRS}
+)
+target_link_libraries(calibrate
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )

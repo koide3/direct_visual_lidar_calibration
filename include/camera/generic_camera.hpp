@@ -28,9 +28,7 @@ public:
   GenericCamera(const Eigen::VectorXd& intrinsic, const Eigen::VectorXd& distortion)
   : min_z(std::cos(CameraModelTraits<Projection>::max_fov)),
     intrinsic(intrinsic),
-    distortion(distortion) {
-    std::cout << "min_z:" << min_z << std::endl;
-  }
+    distortion(distortion) {}
 
   virtual bool in_max_fov(const Eigen::Vector3d& point_3d) const override {
     return point_3d.z() / point_3d.norm() > min_z;
