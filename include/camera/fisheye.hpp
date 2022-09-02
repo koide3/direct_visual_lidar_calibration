@@ -11,11 +11,11 @@ struct FisheyeProjection {
   template <typename T, typename T2>
   Eigen::Matrix<T, 2, 1> operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const {
     T r = point_3d.template head<2>().norm();
-    T theta = ceres::atan2(r, ceres::abs(point_3d.z()));
-    T theta2 = ceres::pow(theta, 2);
-    T theta4 = ceres::pow(theta, 4);
-    T theta6 = ceres::pow(theta, 6);
-    T theta8 = ceres::pow(theta, 8);
+    T theta = atan2(r, abs(point_3d.z()));
+    T theta2 = pow(theta, 2);
+    T theta4 = pow(theta, 4);
+    T theta6 = pow(theta, 6);
+    T theta8 = pow(theta, 8);
 
     const auto& k1 = distortion[0];
     const auto& k2 = distortion[1];
@@ -39,6 +39,7 @@ template <>
 struct CameraModelTraits<FisheyeProjection> {
   static constexpr int num_intrinsic_params = 4;
   static constexpr int num_distortion_params = 4;
+  static constexpr double max_fov = M_PI_2;
 
   static std::string projection_model() { return "pinhole"; }
 

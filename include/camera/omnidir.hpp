@@ -45,6 +45,7 @@ template <>
 struct CameraModelTraits<OmnidirectionalProjection> {
   static constexpr int num_intrinsic_params = 5;
   static constexpr int num_distortion_params = 4;
+  static constexpr double max_fov = M_PI;
 
   static std::string projection_model() { return "unified"; }
 

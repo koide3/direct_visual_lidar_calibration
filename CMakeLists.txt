@@ -32,6 +32,9 @@ catkin_package(
 
 # direct_visual_lidar_calibration
 add_library(direct_visual_lidar_calibration SHARED
+  src/vlcal/common/create_camera.cpp
+  src/vlcal/common/points_color_updater.cpp
+  src/vlcal/common/visual_lidar_data.cpp
   src/vlcal/preprocess/static_point_cloud_integrator.cpp
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
 )
@@ -55,6 +58,18 @@ target_include_directories(preprocess PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
 target_link_libraries(preprocess
+  direct_visual_lidar_calibration
+  ${catkin_LIBRARIES}
+)
+
+# initial_guess_manual
+add_executable(initial_guess_manual
+  src/initial_guess_manual.cpp
+)
+target_include_directories(initial_guess_manual PRIVATE
+  ${catkin_INCLUDE_DIRS}
+)
+target_link_libraries(initial_guess_manual
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )

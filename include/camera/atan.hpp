@@ -38,6 +38,7 @@ template <>
 struct CameraModelTraits<ATANProjection> {
   static constexpr int num_intrinsic_params = 4;
   static constexpr int num_distortion_params = 1;
+  static constexpr double max_fov = M_PI_2;
 
   static std::string projection_model() { return "atan"; }
 

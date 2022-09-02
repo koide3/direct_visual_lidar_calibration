@@ -407,6 +407,7 @@ int main(int argc, char** argv) {
 
   std::filesystem::create_directories(dst_path);
   std::ofstream ofs(dst_path + "/calib.json");
+  ofs << config.dump(2) << std::endl;
 
   if (vm.count("visualize")) {
     auto viewer = guik::LightViewer::instance();
