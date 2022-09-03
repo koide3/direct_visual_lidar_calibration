@@ -11,6 +11,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS rosbag sensor_msgs cv_bridge)
 
+find_package(PCL REQUIRED)
 find_package(glim REQUIRED)
 find_package(Iridescence REQUIRED)
 
@@ -39,15 +40,18 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/preprocess/static_point_cloud_integrator.cpp
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
   src/vlcal/calib/cost_calculator_nid.cpp
+  src/vlcal/calib/edge_extraction.cpp
 )
 target_include_directories(direct_visual_lidar_calibration PUBLIC
   include
   thirdparty/json/include
   thirdparty/Bonxai/include
+  ${PCL_INCLUDE_DIRS}
   ${glim_INCLUDE_DIRS}
   ${Iridescence_INCLUDE_DIRS}
 )
 target_link_libraries(direct_visual_lidar_calibration
+  ${PCL_LIBRARIES}
   ${glim_LIBRARIES}
   ${Iridescence_LIBRARIES}
 )
@@ -84,6 +88,18 @@ target_include_directories(calibrate PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
 target_link_libraries(calibrate
+  direct_visual_lidar_calibration
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(plane_test
+  src/plane_test.cpp
+)
+target_include_directories(plane_test PRIVATE
+  ${catkin_INCLUDE_DIRS}
+)
+target_link_libraries(plane_test
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )
