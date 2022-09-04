@@ -1,17 +1,10 @@
 #include <iostream>
-
-#include <glk/io/ply_io.hpp>
-#include <glk/thin_lines.hpp>
-#include <glk/pointcloud_buffer.hpp>
-#include <glk/pointcloud_buffer_pcl.hpp>
-#include <guik/viewer/light_viewer.hpp>
-
-#include <gtsam_ext/types/frame_cpu.hpp>
-
-#include <vlcal/calib/edge_extraction.hpp>
+#include <Eigen/Core>
+#include <Eigen/Eigen>
 
 #include <opencv2/opencv.hpp>
 #include <vlcal/calib/nearest_neighbor_search.hpp>
+#include <vlcal/calib/line_fitting.hpp>
 
 cv::Mat edges;
 
@@ -25,6 +18,7 @@ void on_mouse(int event, int x, int y, int flags, void* userdata) {
     const int k = 20;
     std::vector<Eigen::Vector2i> k_neighbors(k);
     int num_found = nn->knn_search(Eigen::Vector2d(x, y), k, k_neighbors.data());
+    k_neighbors.resize(num_found);
 
     std::cout << "---" << std::endl;
     for (int i = 0; i < num_found; i++) {
@@ -33,6 +27,20 @@ void on_mouse(int event, int x, int y, int flags, void* userdata) {
       bgr[0] = 0;
       bgr[1] = 0;
       bgr[2] = 255;
+    }
+
+    if (num_found > 5) {
+      const auto [p0, n] = vlcal::fit_line(k_neighbors);
+
+      Eigen::Vector2d dir = Eigen::Rotation2Dd(M_PI_2) * n;
+
+      Eigen::Vector2d pt0 = p0 - 20.0 * n;
+      Eigen::Vector2d pt1 = p0 + 20.0 * n;
+
+      cv::line(canvas, cv::Point(pt0.x(), pt0.y()), cv::Point(pt1.x(), pt1.y()), cv::Scalar(255, 0, 0));
+
+      std::cout << "p0:" << p0.transpose() << std::endl;
+      std::cout << "n :" << n.transpose() << std::endl;
     }
 
     cv::imshow("edges", canvas);

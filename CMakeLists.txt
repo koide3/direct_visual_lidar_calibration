@@ -42,6 +42,7 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/calib/cost_calculator_nid.cpp
   src/vlcal/calib/edge_extraction.cpp
   src/vlcal/calib/nearest_neighbor_search.cpp
+  src/vlcal/calib/line_fitting.cpp
 )
 target_include_directories(direct_visual_lidar_calibration PUBLIC
   include
