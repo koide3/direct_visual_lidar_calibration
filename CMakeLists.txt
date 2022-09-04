@@ -41,11 +41,13 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
   src/vlcal/calib/cost_calculator_nid.cpp
   src/vlcal/calib/edge_extraction.cpp
+  src/vlcal/calib/nearest_neighbor_search.cpp
 )
 target_include_directories(direct_visual_lidar_calibration PUBLIC
   include
   thirdparty/json/include
   thirdparty/Bonxai/include
+  thirdparty/nanoflann/include
   ${PCL_INCLUDE_DIRS}
   ${glim_INCLUDE_DIRS}
   ${Iridescence_INCLUDE_DIRS}
