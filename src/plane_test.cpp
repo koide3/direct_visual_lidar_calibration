@@ -1,3 +1,5 @@
+#include <random>
+#include <chrono>
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/Eigen>
@@ -15,7 +17,7 @@ void on_mouse(int event, int x, int y, int flags, void* userdata) {
     cv::Mat canvas;
     cv::cvtColor(edges, canvas, cv::COLOR_GRAY2BGR);
 
-    const int k = 20;
+    const int k = 10;
     std::vector<Eigen::Vector2i> k_neighbors(k);
     int num_found = nn->knn_search(Eigen::Vector2d(x, y), k, k_neighbors.data());
     k_neighbors.resize(num_found);
@@ -47,6 +49,41 @@ void on_mouse(int event, int x, int y, int flags, void* userdata) {
   }
 }
 
+void test(const cv::Mat& edges) {
+  std::mt19937 mt;
+
+  std::vector<Eigen::Vector2d> points(8192 * 10);
+  for (int i = 0; i < points.size(); i++) {
+    points[i].x() = std::uniform_real_distribution<>(0, edges.cols)(mt);
+    points[i].y() = std::uniform_real_distribution<>(0, edges.rows)(mt);
+  }
+
+  const int k = 10;
+  std::vector<Eigen::Vector2i> k_neighbors(k);
+
+  int sum_found = 0;
+  vlcal::ImageSpaceNearestNeighborSearch nn_i(edges, 10);
+
+  auto t1 = std::chrono::high_resolution_clock::now();
+  for (const auto& pt : points) {
+    sum_found += nn_i.knn_search(pt, k, k_neighbors.data());
+  }
+  auto t2 = std::chrono::high_resolution_clock::now();
+
+  std::cout << "i:" << sum_found << " time:" << std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1e6 << "[msec]" << std::endl;
+
+  sum_found = 0;
+  vlcal::KdTreeNearestNeighborSearch nn_k(edges);
+
+  t1 = std::chrono::high_resolution_clock::now();
+  for (const auto& pt : points) {
+    sum_found += nn_k.knn_search(pt, k, k_neighbors.data());
+  }
+  t2 = std::chrono::high_resolution_clock::now();
+
+  std::cout << "k:" << sum_found << " time:" << std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1e6 << "[msec]" << std::endl;
+}
+
 int main(int argc, char** argv) {
   cv::Mat image = cv::imread("/home/koide/datasets/lidar_camera/0.png", 0);
   cv::resize(image.clone(), image, cv::Size(0, 0), 0.5, 0.5);
@@ -54,8 +91,10 @@ int main(int argc, char** argv) {
   cv::equalizeHist(image.clone(), image);
   cv::Canny(image, edges, 100, 200);
 
-  // vlcal::ImageSpaceNearestNeighborSearch nn(edges, 20);
-  vlcal::KdTreeNearestNeighborSearch nn(edges);
+  test(edges);
+
+  vlcal::ImageSpaceNearestNeighborSearch nn(edges, 20);
+  // vlcal::KdTreeNearestNeighborSearch nn(edges);
   cv::imshow("edges", edges);
 
   cv::setMouseCallback("edges", on_mouse, &nn);

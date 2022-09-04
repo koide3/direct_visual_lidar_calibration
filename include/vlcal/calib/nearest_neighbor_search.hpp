@@ -32,7 +32,11 @@ public:
   virtual size_t knn_search(const Eigen::Vector2d& pt, size_t k, Eigen::Vector2i* k_neighbors) const override;
 
 private:
+  cv::Mat build_x_blank(const cv::Mat& image) const;
+
+private:
   const cv::Mat image;
+  const cv::Mat x_blank;
   const int max_radius;
 };
 
