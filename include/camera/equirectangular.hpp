@@ -29,7 +29,6 @@ template <>
 struct CameraModelTraits<EquirectangularProjection> {
   static constexpr int num_intrinsic_params = 2;
   static constexpr int num_distortion_params = 0;
-  static constexpr double max_fov = M_PI;
 
   static std::string projection_model() { return "equirectangular"; }
 

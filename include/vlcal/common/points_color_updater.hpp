@@ -17,6 +17,7 @@ public:
 
 public:
   camera::GenericCameraBase::ConstPtr proj;
+  double max_fov;
 
   cv::Mat image;
 

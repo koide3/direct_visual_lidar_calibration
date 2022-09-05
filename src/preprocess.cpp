@@ -224,16 +224,22 @@ std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> get_image_and_points(
     const auto image_msg = m.instantiate<sensor_msgs::Image>();
     const auto compressed_image_msg = m.instantiate<sensor_msgs::CompressedImage>();
     if (image_msg) {
-      image = cv_bridge::toCvCopy(image_msg, "mono8")->image;
+      image = cv_bridge::toCvCopy(image_msg, "mono8")->image.clone();
       break;
     } else if (compressed_image_msg) {
-      image = cv_bridge::toCvCopy(compressed_image_msg, "mono8")->image;
+      image = cv_bridge::toCvCopy(compressed_image_msg, "mono8")->image.clone();
       break;
     }
 
     std::cerr << glim::console::bold_yellow << "warning: failed to instantiate image msg on " << image_topic << glim::console::reset << std::endl;
     std::cerr << glim::console::bold_yellow << "       : bag_filename=" << bag_filename << glim::console::reset << std::endl;
   }
+
+  if(!image.data) {
+    std::cerr << glim::console::bold_red << "error: failed to obtain an image (image_topic=" << image_topic << ")" << glim::console::reset << std::endl;
+    abort();
+  }
+
   cv::equalizeHist(image.clone(), image);
 
   // integrate points
@@ -302,9 +308,10 @@ int main(int argc, char** argv) {
     ("image_topic", value<std::string>())
     ("points_topic", value<std::string>())
     ("camera_model", value<std::string>()->default_value("auto"), "auto, atan, plumb_bob, fisheye, omnidir, or equirectangular")
-    ("camera_intrinsics", value<std::string>(), "camera intrinsic parameters [fx,fy,cx,cy(,xi)]")
-    ("camera_distortion_coeffs", value<std::string>(), "camera distortion parameters [k1 k2 p1 p2 k3]")
+    ("camera_intrinsics", value<std::string>(), "camera intrinsic parameters [fx,fy,cx,cy(,xi)] (don't put spaces between values!!)")
+    ("camera_distortion_coeffs", value<std::string>(), "camera distortion parameters [k1,k2,p1,p2,k3] (don't put spaces between values!!)")
     ("voxel_resolution", value<double>()->default_value(0.002), "voxel grid resolution")
+    ("min_distance", value<double>()->default_value(1.0), "minimum point distance. Points closer than this value will be discarded")
     ("visualize,v", "if true, show extracted images and points")
   ;
   // clang-format on
@@ -326,6 +333,7 @@ int main(int argc, char** argv) {
   const std::string dst_path = vm["dst_path"].as<std::string>();
   std::cout << "data_path: " << data_path << std::endl;
   std::cout << "dst_path : " << dst_path << std::endl;
+  std::filesystem::create_directories(dst_path);
 
   std::cout << "input_bags:" << std::endl;
   std::vector<std::string> bag_filenames;
@@ -405,7 +413,6 @@ int main(int argc, char** argv) {
   config["camera"]["intrinsics"] = intrinsics;
   config["camera"]["distortion_coeffs"] = distortion_coeffs;
 
-  std::filesystem::create_directories(dst_path);
   std::ofstream ofs(dst_path + "/calib.json");
   ofs << config.dump(2) << std::endl;
 

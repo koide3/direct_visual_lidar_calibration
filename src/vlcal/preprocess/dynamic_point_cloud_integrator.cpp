@@ -10,8 +10,7 @@
 #include <gtsam_ext/util/covariance_estimation.hpp>
 #include <gtsam_ext/factors/integrated_ct_gicp_factor.hpp>
 #include <gtsam_ext/optimizers/levenberg_marquardt_ext.hpp>
-
-#include <bonxai/bonxai.hpp>
+#include <gtsam_ext/util/vector3i_hash.hpp>
 
 #include <glim/common/cloud_covariance_estimation.hpp>
 
@@ -26,6 +25,7 @@ DynamicPointCloudIntegratorParams::DynamicPointCloudIntegratorParams() {
   k_neighbors = 20;
   target_num_points = 10000;
   voxel_resolution = 0.05;
+  min_distance = 1.0;
 }
 
 DynamicPointCloudIntegratorParams::~DynamicPointCloudIntegratorParams() {}
@@ -35,7 +35,6 @@ DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloud
   last_T_odom_lidar_end = gtsam::Pose3();
 
   target_ivox.reset(new gtsam_ext::iVox(1.0, 0.05, 100));
-  voxelgrid.reset(new Bonxai::VoxelGrid<Eigen::Vector4d>(params.voxel_resolution));
 
   voxelgrid_thread = std::thread([this] { voxelgrid_task(); });
 }
@@ -47,9 +46,9 @@ DynamicPointCloudIntegrator::~DynamicPointCloudIntegrator() {
   }
 }
 
-void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points) {
+void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points_) {
+  auto raw_points = gtsam_ext::sort_by_time(raw_points_);
   auto points = gtsam_ext::randomgrid_sampling(raw_points, 0.5, static_cast<double>(params.target_num_points) / raw_points->size(), mt);
-  points = gtsam_ext::sort_by_time(points);
 
   std::vector<int> neighbors(points->size() * params.k_neighbors);
 
@@ -123,13 +122,11 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
     const auto& raw_points = std::get<0>(*data);
     const auto& T_odom_lidar_begin = std::get<1>(*data);
     const auto& T_odom_lidar_end = std::get<2>(*data);
-
     const double max_timestamp = raw_points->times[raw_points->size() - 1];
 
     double last_t = -1.0;
     gtsam::Pose3 T_odom_lidar = T_odom_lidar_begin;
 
-    auto accessor = voxelgrid->createAccessor();
     for (int i = 0; i < raw_points->size(); i++) {
       const double t = raw_points->times[i] / max_timestamp;
 
@@ -139,8 +136,8 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
       }
 
       const Eigen::Vector4d pt = T_odom_lidar.matrix() * raw_points->points[i];
-      const Bonxai::CoordT coord = voxelgrid->posToCoord(pt[0], pt[1], pt[2]);
-      accessor.setValue(coord, Eigen::Vector4d(pt[0], pt[1], pt[2], raw_points->intensities[i]));
+      const Eigen::Vector3i coord = (pt / params.voxel_resolution).array().floor().cast<int>().head<3>();
+      voxelgrid[coord] = Eigen::Vector4d(pt[0], pt[1], pt[2], raw_points->intensities[i]);
     }
 
     /*
@@ -168,10 +165,14 @@ gtsam_ext::Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
   std::vector<Eigen::Vector3f> points;
   std::vector<float> intensities;
 
-  voxelgrid->forEachCell([&](const Eigen::Vector4d& value, const auto& coord) {
-    points.emplace_back(value.head<3>().cast<float>());
-    intensities.emplace_back(value.w());
-  });
+  points.reserve(voxelgrid.size());
+  intensities.reserve(voxelgrid.size());
+
+  for(const auto& voxel: voxelgrid) {
+    points.emplace_back(voxel.second.cast<float>().head<3>());
+    intensities.emplace_back(voxel.second.w());
+  }
+
 
   auto frame = std::make_shared<gtsam_ext::FrameCPU>(points);
   frame->add_intensities(intensities);

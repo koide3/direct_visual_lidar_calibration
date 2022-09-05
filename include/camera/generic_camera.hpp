@@ -15,24 +15,19 @@ public:
   GenericCameraBase() {}
   virtual ~GenericCameraBase() {}
 
-  virtual bool in_max_fov(const Eigen::Vector3d& point_3d) const = 0;
-
   Eigen::Vector2d project(const Eigen::Vector3d& point_3d) const { return (*this)(point_3d); }
 
   virtual Eigen::Vector2d operator()(const Eigen::Vector3d& point_3d) const = 0;
+
+  double estimate_fov(const Eigen::Vector2i&) const;
 };
 
 template <typename Projection>
 class GenericCamera : public GenericCameraBase {
 public:
   GenericCamera(const Eigen::VectorXd& intrinsic, const Eigen::VectorXd& distortion)
-  : min_z(std::cos(CameraModelTraits<Projection>::max_fov)),
-    intrinsic(intrinsic),
+  : intrinsic(intrinsic),
     distortion(distortion) {}
-
-  virtual bool in_max_fov(const Eigen::Vector3d& point_3d) const override {
-    return point_3d.z() / point_3d.norm() > min_z;
-  }
 
   virtual Eigen::Vector2d operator()(const Eigen::Vector3d& point_3d) const override {
     Projection proj;
@@ -40,7 +35,6 @@ public:
   }
 
 private:
-  const double min_z;
   Eigen::VectorXd intrinsic;
   Eigen::VectorXd distortion;
 };

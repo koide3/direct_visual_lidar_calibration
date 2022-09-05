@@ -33,6 +33,7 @@ catkin_package(
 
 # direct_visual_lidar_calibration
 add_library(direct_visual_lidar_calibration SHARED
+  src/camera/generic_camera.cpp
   src/vlcal/common/create_camera.cpp
   src/vlcal/common/points_color_updater.cpp
   src/vlcal/common/visual_lidar_data.cpp

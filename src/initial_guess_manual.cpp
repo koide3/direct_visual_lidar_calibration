@@ -39,6 +39,9 @@ public:
     for (const auto& bag_name : bag_names) {
       dataset.emplace_back(std::make_shared<VisualLiDARData>(data_path, bag_name));
     }
+
+    const auto image_size = dataset[0]->image.size();
+    std::cout << "camera_fov:" << proj->estimate_fov({image_size.width, image_size.height}) * 180.0 / M_PI << "[deg]" << std::endl;
   }
 
   void spin() {
@@ -47,8 +50,9 @@ public:
     const std::string camera_model = config["camera"]["camera_model"];
     Eigen::Isometry3d init_T_lidar_camera = Eigen::Isometry3d::Identity();
     if (camera_model != "equirectangular") {
-      init_T_lidar_camera.linear() = Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+      init_T_lidar_camera.linear() = (Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitZ())).toRotationMatrix();
     } else {
+      init_T_lidar_camera.linear() = (Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitX()) ).toRotationMatrix();
     }
 
     auto viewer = guik::LightViewer::instance();

@@ -2,17 +2,15 @@
 
 #include <random>
 #include <thread>
+#include <unordered_map>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #include <gtsam_ext/types/frame_cpu.hpp>
+#include <gtsam_ext/util/vector3i_hash.hpp>
 #include <vlcal/common/concurrent_queue.hpp>
 #include <vlcal/preprocess/point_cloud_integrator.hpp>
 
-namespace Bonxai {
-template <typename T>
-class VoxelGrid;
-}
 
 namespace vlcal {
 
@@ -22,6 +20,7 @@ public:
   ~StaticPointCloudIntegratorParams();
 
   double voxel_resolution;
+  double min_distance;
 };
 
 class StaticPointCloudIntegrator : public PointCloudIntegrator {
@@ -35,6 +34,6 @@ public:
 private:
   const StaticPointCloudIntegratorParams params;
 
-  std::unique_ptr<Bonxai::VoxelGrid<Eigen::Vector4d>> voxelgrid;
+  std::unordered_map<Eigen::Vector3i, Eigen::Vector4d, gtsam_ext::Vector3iHash> voxelgrid;
 };
 }
