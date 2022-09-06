@@ -50,10 +50,7 @@ public:
 
     for (const auto& data : dataset) {
       auto nid_cost = std::make_shared<CostCalculatorNID>(proj, data);
-      auto edge_cost = std::make_shared<CostCalculatorEdge>(proj, data);
-
-      costs.emplace_back(std::make_shared<CostScaler>(nid_cost, 100.0));
-      costs.emplace_back(std::make_shared<CostScaler>(edge_cost));
+      costs.emplace_back(nid_cost);
     }
   }
 
@@ -85,7 +82,7 @@ public:
 
       double sum = 0.0;
 
-// #pragma omp parallel for reduction(+ : sum)
+#pragma omp parallel for reduction(+ : sum)
       for (int i = 0; i < costs.size(); i++) {
         sum += costs[i]->calculate(T_camera_lidar);
       }
@@ -107,15 +104,8 @@ public:
       }
     };
 
-    // dfo::NelderMead<6>::Params params;
-    // dfo::NelderMead<6> optimizer(params);
-
-    // dfo::OptimizationResult<6> result;
-
-    dfo::DirectionalDirectSearch<6>::Params params;
-    params.init_alpha = 1e-2;
-    dfo::DirectionalDirectSearch<6> optimizer(params);
-    optimizer.set_callback(callback);
+    dfo::NelderMead<6>::Params params;
+    dfo::NelderMead<6> optimizer(params);
     dfo::OptimizationResult<6> result;
 
     std::atomic_bool optimization_terminated = false;

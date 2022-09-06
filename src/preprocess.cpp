@@ -388,11 +388,13 @@ int main(int argc, char** argv) {
   std::cout << "dist_coeffs : " << Eigen::Map<const Eigen::VectorXd>(distortion_coeffs.data(), distortion_coeffs.size()).transpose() << std::endl;
 
   // process bags
-  int num_threads_per_bag = 1 + omp_get_max_threads() / bag_filenames.size();
+  int num_threads_per_bag = omp_get_max_threads() / bag_filenames.size();
   num_threads_per_bag = std::max(2, std::min(omp_get_max_threads(), num_threads_per_bag));
   std::cout << "processing images and points (num_threads_per_bag=" << num_threads_per_bag << ")" << std::endl;
 
   std::vector<gtsam_ext::Frame::ConstPtr> lidar_points(bag_filenames.size());
+
+  omp_set_max_active_levels(2);
 
 #pragma omp parallel for
   for (int i = 0; i < bag_filenames.size(); i++) {
@@ -415,6 +417,7 @@ int main(int argc, char** argv) {
     std::cout << "processed " << bag_filename << std::endl;
   }
 
+  // Generate LiDAR images
   const double lidar_fov = vlcal::estimate_lidar_fov(lidar_points.front());
   Eigen::Vector2i lidar_image_size;
   std::string lidar_camera_model;
@@ -437,6 +440,7 @@ int main(int argc, char** argv) {
 
   auto lidar_proj = camera::create_camera(lidar_camera_model, lidar_camera_intrinsics, {});
 
+#pragma omp parallel for
   for (int i = 0; i < bag_filenames.size(); i++) {
     const std::string bag_name = std::filesystem::path(bag_filenames[i]).filename();
     auto [intensities, indices] = vlcal::generate_lidar_image(lidar_proj, lidar_image_size, T_lidar_camera.inverse(), lidar_points[i]);

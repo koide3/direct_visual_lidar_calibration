@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <dfo/nelder_mead.hpp>
+#include <dfo/directional_direct_search.hpp>
 
 #include <gtsam_ext/types/frame_cpu.hpp>
 
@@ -12,25 +13,29 @@
 
 namespace vlcal {
 
-double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector2i& image_size) {
-  const std::vector<Eigen::Vector2d> target_corners = {Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(image_size[0] / 2, 0.0), Eigen::Vector2d(0.0, image_size[1] / 2)};
-
+Eigen::Vector3d estimate_direction(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector2d& pt_2d) {
   const auto to_dir = [](const Eigen::Vector2d& x) {
     return Eigen::AngleAxisd(x[0], Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(x[1], Eigen::Vector3d::UnitY()) * Eigen::Vector3d::UnitZ();
   };
 
+  const auto f = [&](const Eigen::Vector2d& x) {
+    const Eigen::Vector3d dir = to_dir(x);
+    return (pt_2d - proj->project(dir)).squaredNorm();
+  };
+
+  dfo::DirectionalDirectSearch<2>::Params params;
+  dfo::DirectionalDirectSearch<2> optimizer(params);
+  auto result = optimizer.optimize(f, Eigen::Vector2d::Zero());
+
+  return to_dir(result.x);
+}
+
+double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector2i& image_size) {
+  const std::vector<Eigen::Vector2d> target_corners = {Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(image_size[0] / 2, 0.0), Eigen::Vector2d(0.0, image_size[1] / 2)};
+
   double max_fov = 0.0;
   for (const auto& corner : target_corners) {
-    const auto f = [&](const Eigen::Vector2d& x) {
-      const Eigen::Vector3d dir = to_dir(x);
-      return (corner - proj->project(dir)).squaredNorm();
-    };
-
-    dfo::NelderMead<2>::Params params;
-    dfo::NelderMead<2> optimizer(params);
-    auto result = optimizer.optimize(f, Eigen::Vector2d::Zero());
-
-    const auto dir = to_dir(result.x);
+    const auto dir = estimate_direction(proj, corner);
     const double fov = std::acos(dir.normalized().z());
 
     if (fov > max_fov) {
