@@ -136,6 +136,11 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
       }
 
       const Eigen::Vector4d pt = T_odom_lidar.matrix() * raw_points->points[i];
+
+      if (pt.head<3>().norm() < params.min_distance) {
+        continue;
+      }
+
       const Eigen::Vector3i coord = (pt / params.voxel_resolution).array().floor().cast<int>().head<3>();
       voxelgrid[coord] = Eigen::Vector4d(pt[0], pt[1], pt[2], raw_points->intensities[i]);
     }

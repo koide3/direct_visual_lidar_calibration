@@ -19,6 +19,10 @@ void StaticPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr&
     const auto& pt = raw_points->points[i];
     const double intensity = raw_points->intensities[i];
 
+    if (pt.head<3>().norm() < params.min_distance) {
+      continue;
+    }
+
     const Eigen::Vector3i coord = (pt / params.voxel_resolution).array().floor().cast<int>().head<3>();
     voxelgrid[coord] = Eigen::Vector4d(pt[0], pt[1], pt[2], intensity);
   }

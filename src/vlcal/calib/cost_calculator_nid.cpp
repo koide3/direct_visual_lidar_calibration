@@ -1,18 +1,21 @@
 #include <vlcal/calib/cost_calculator_nid.hpp>
 
+#include <vlcal/common/estimate_fov.hpp>
+
 namespace vlcal {
 
-NIDParams::NIDParams() {
+NIDCostParams::NIDCostParams() {
   bins = 16;
   num_threads = 1;
 }
 
-NIDParams::~NIDParams() {}
+NIDCostParams::~NIDCostParams() {}
 
-CostCalculatorNID::CostCalculatorNID(const camera::GenericCameraBase::ConstPtr& proj, const VisualLiDARData::ConstPtr& data, const NIDParams& params)
+CostCalculatorNID::CostCalculatorNID(const camera::GenericCameraBase::ConstPtr& proj, const VisualLiDARData::ConstPtr& data, const NIDCostParams& params)
 : params(params),
   proj(proj),
-  data(data) {}
+  data(data),
+  max_fov( estimate_camera_fov(proj, {data->image.cols, data->image.rows})) {}
 
 CostCalculatorNID::~CostCalculatorNID() {}
 
@@ -27,9 +30,9 @@ double CostCalculatorNID::calculate(const Eigen::Isometry3d& T_camera_lidar) {
 
   for (int i = 0; i < points->size(); i++) {
     const Eigen::Vector4d pt_camera = T_camera_lidar * points->points[i];
-    // if (!proj->in_max_fov(pt_camera.head<3>())) {
-    //   continue;
-    // }
+    if (pt_camera.head<3>().normalized().z() < std::cos(max_fov)) {
+      continue;
+    }
 
     const Eigen::Array2i pt_2d = proj->project(pt_camera.head<3>()).cast<int>();
     if ((pt_2d < Eigen::Array2i::Zero()).any() || (pt_2d >= image_size).any()) {

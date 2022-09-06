@@ -1,0 +1,74 @@
+#include <vlcal/common/estimate_fov.hpp>
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <dfo/nelder_mead.hpp>
+
+#include <gtsam_ext/types/frame_cpu.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/surface/convex_hull.h>
+
+namespace vlcal {
+
+double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector2i& image_size) {
+  const std::vector<Eigen::Vector2d> target_corners = {Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(image_size[0] / 2, 0.0), Eigen::Vector2d(0.0, image_size[1] / 2)};
+
+  const auto to_dir = [](const Eigen::Vector2d& x) {
+    return Eigen::AngleAxisd(x[0], Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(x[1], Eigen::Vector3d::UnitY()) * Eigen::Vector3d::UnitZ();
+  };
+
+  double max_fov = 0.0;
+  for (const auto& corner : target_corners) {
+    const auto f = [&](const Eigen::Vector2d& x) {
+      const Eigen::Vector3d dir = to_dir(x);
+      return (corner - proj->project(dir)).squaredNorm();
+    };
+
+    dfo::NelderMead<2>::Params params;
+    dfo::NelderMead<2> optimizer(params);
+    auto result = optimizer.optimize(f, Eigen::Vector2d::Zero());
+
+    const auto dir = to_dir(result.x);
+    const double fov = std::acos(dir.normalized().z());
+
+    if (fov > max_fov) {
+      max_fov = fov;
+    }
+  }
+
+  return max_fov;
+}
+
+double estimate_lidar_fov(const gtsam_ext::Frame::ConstPtr& points_) {
+  auto points = gtsam_ext::voxelgrid_sampling(points_, 0.2);
+  points = gtsam_ext::filter(points, [](const Eigen::Vector4d& p) { return p.head<3>().norm() > 1.0; });
+
+  auto cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  cloud->resize(points->size());
+  std::transform(points->points, points->points + points->size(), cloud->begin(), [](const auto& p) { return pcl::PointXYZ(p.x(), p.y(), p.z()); });
+
+  pcl::ConvexHull<pcl::PointXYZ> convexhull;
+  convexhull.setInputCloud(cloud);
+
+  auto hull = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  convexhull.reconstruct(*hull);
+
+  std::vector<Eigen::Vector3d> dirs(hull->size());
+  for (int i = 0; i < hull->size(); i++) {
+    dirs[i] = hull->at(i).getVector3fMap().cast<double>().normalized();
+  }
+
+  double min_cosine = M_PI;
+  for (int i = 0; i < hull->size(); i++) {
+    for (int j = i + 1; j < hull->size(); j++) {
+      const double cosine = dirs[i].dot(dirs[j]);
+      min_cosine = std::min(cosine, min_cosine);
+    }
+  }
+
+  return std::acos(min_cosine);
+}
+
+}  // namespace vlcal

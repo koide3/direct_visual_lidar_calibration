@@ -22,6 +22,9 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include <camera/create_camera.hpp>
+#include <vlcal/common/estimate_fov.hpp>
+#include <vlcal/preprocess/generate_lidar_image.hpp>
 #include <vlcal/preprocess/static_point_cloud_integrator.hpp>
 #include <vlcal/preprocess/dynamic_point_cloud_integrator.hpp>
 
@@ -249,11 +252,13 @@ std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> get_image_and_points(
   if (vm.count("dynamic_lidar_integration")) {
     vlcal::DynamicPointCloudIntegratorParams params;
     params.voxel_resolution = vm["voxel_resolution"].as<double>();
+    params.min_distance = vm["min_distance"].as<double>();
     params.num_threads = num_threads;
     points_integrator.reset(new vlcal::DynamicPointCloudIntegrator(params));
   } else {
     vlcal::StaticPointCloudIntegratorParams params;
     params.voxel_resolution = vm["voxel_resolution"].as<double>();
+    params.min_distance = vm["min_distance"].as<double>();
     points_integrator.reset(new vlcal::StaticPointCloudIntegrator(params));
   }
 
@@ -301,6 +306,7 @@ int main(int argc, char** argv) {
     ("help", "produce help message")
     ("data_path", value<std::string>(), "directory that contains rosbags for calibration")
     ("dst_path", value<std::string>(), "directory to save preprocessed data")
+    ("bag_id", value<int>()->default_value(-1), "specify the bag to use (just for evaluation)")
     ("auto_topic,a", "automatically select topics")
     ("dynamic_lidar_integration,d", "create target point cloud from dynamic LiDAR data (for velodyne-like LiDARs)")
     ("intensity_channel,i", value<std::string>()->default_value("auto"), "auto or channel name")
@@ -351,6 +357,14 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  const int bag_id = vm["bag_id"].as<int>();
+  if (bag_id >= 0) {
+    std::sort(bag_filenames.begin(), bag_filenames.end());
+    std::cerr << glim::console::bold_yellow << "use only " << bag_filenames[bag_id] << glim::console::reset << std::endl;
+    const std::string bag_filename = bag_filenames[bag_id];
+    bag_filenames = {bag_filename};
+  }
+
   // topics
   // why omp causes errors for structured bindings?
   const auto topics = get_topics(vm, bag_filenames.front());
@@ -378,13 +392,16 @@ int main(int argc, char** argv) {
   num_threads_per_bag = std::max(2, std::min(omp_get_max_threads(), num_threads_per_bag));
   std::cout << "processing images and points (num_threads_per_bag=" << num_threads_per_bag << ")" << std::endl;
 
+  std::vector<gtsam_ext::Frame::ConstPtr> lidar_points(bag_filenames.size());
+
 #pragma omp parallel for
   for (int i = 0; i < bag_filenames.size(); i++) {
     const auto& bag_filename = bag_filenames[i];
     auto [image, points] = get_image_and_points(vm, bag_filename, image_topic, points_topic, intensity_channel, num_threads_per_bag);
 
-    const std::string bag_name = std::filesystem::path(bag_filename).filename();
+    lidar_points[i] = points;
 
+    const std::string bag_name = std::filesystem::path(bag_filename).filename();
     cv::imwrite(dst_path + "/" + bag_name + ".png", image);
 
     glk::PLYData ply;
@@ -396,6 +413,39 @@ int main(int argc, char** argv) {
     glk::save_ply_binary(dst_path + "/" + bag_name + ".ply", ply);
 
     std::cout << "processed " << bag_filename << std::endl;
+  }
+
+  const double lidar_fov = vlcal::estimate_lidar_fov(lidar_points.front());
+  Eigen::Vector2i lidar_image_size;
+  std::string lidar_camera_model;
+  std::vector<double> lidar_camera_intrinsics;
+
+  Eigen::Isometry3d T_lidar_camera = Eigen::Isometry3d::Identity();
+
+  if (lidar_fov < 150.0 * M_PI / 180.0) {
+    lidar_image_size = {1920, 1920};
+    T_lidar_camera.linear() = (Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitZ())).toRotationMatrix();
+    const double fx = lidar_image_size.x() / (2.0 * std::tan(lidar_fov / 2.0));
+    lidar_camera_model = "plumb_bob";
+    lidar_camera_intrinsics = {fx, fx, lidar_image_size[0] / 2.0, lidar_image_size[1] / 2.0};
+  } else {
+    lidar_image_size = {1920, 960};
+    T_lidar_camera.linear() = (Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitX())).toRotationMatrix();
+    lidar_camera_model = "equirectangular";
+    lidar_camera_intrinsics = {static_cast<double>(lidar_image_size[0]), static_cast<double>(lidar_image_size[1])};
+  }
+
+  auto lidar_proj = camera::create_camera(lidar_camera_model, lidar_camera_intrinsics, {});
+
+  for (int i = 0; i < bag_filenames.size(); i++) {
+    const std::string bag_name = std::filesystem::path(bag_filenames[i]).filename();
+    auto [intensities, indices] = vlcal::generate_lidar_image(lidar_proj, lidar_image_size, T_lidar_camera.inverse(), lidar_points[i]);
+
+    cv::Mat indices_8uc4(indices.rows, indices.cols, CV_8UC4, reinterpret_cast<cv::Vec4b*>(indices.data));
+
+    intensities.clone().convertTo(intensities, CV_8UC1, 255.0);
+    cv::imwrite(dst_path + "/" + bag_name + "_lidar_intensities.png", intensities);
+    cv::imwrite(dst_path + "/" + bag_name + "_lidar_indices.png", indices_8uc4);
   }
 
   //

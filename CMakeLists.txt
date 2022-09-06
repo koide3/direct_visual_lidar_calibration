@@ -33,14 +33,16 @@ catkin_package(
 
 # direct_visual_lidar_calibration
 add_library(direct_visual_lidar_calibration SHARED
-  src/camera/generic_camera.cpp
-  src/vlcal/common/create_camera.cpp
+  src/camera/create_camera.cpp
+  src/vlcal/common/estimate_fov.cpp
   src/vlcal/common/points_color_updater.cpp
   src/vlcal/common/visual_lidar_data.cpp
   src/vlcal/common/visual_lidar_visualizer.cpp
+  src/vlcal/preprocess/generate_lidar_image.cpp
   src/vlcal/preprocess/static_point_cloud_integrator.cpp
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
   src/vlcal/calib/cost_calculator_nid.cpp
+  src/vlcal/calib/cost_calculator_edge.cpp
   src/vlcal/calib/edge_extraction.cpp
   src/vlcal/calib/nearest_neighbor_search.cpp
   src/vlcal/calib/line_fitting.cpp
@@ -97,13 +99,13 @@ target_link_libraries(calibrate
 )
 
 
-add_executable(plane_test
-  src/plane_test.cpp
+add_executable(gen_image
+  src/gen_image.cpp
 )
-target_include_directories(plane_test PRIVATE
+target_include_directories(gen_image PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(plane_test
+target_link_libraries(gen_image
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )

@@ -14,6 +14,7 @@ public:
   CostCalculator() {}
   virtual ~CostCalculator() {}
 
+  virtual void update_correspondences(const Eigen::Isometry3d& T_camera_lidar) {}
   virtual double calculate(const Eigen::Isometry3d& T_camera_lidar) = 0;
 
   virtual void visualize(const Eigen::Isometry3d& T_camera_lidar) {}

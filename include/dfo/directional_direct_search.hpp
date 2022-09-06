@@ -36,7 +36,8 @@ public:
     for (int i = 0; i < params.max_iterations; i++) {
       result.num_iterations = i;
 
-      if(!coordinate_search(function, result.x, result.y, alpha)) {
+      result.y = function(result.x);
+      if (!coordinate_search(function, result.x, result.y, alpha)) {
         alpha *= params.alpha_dec_factor;
       } else {
         alpha *= params.alpha_inc_factor;

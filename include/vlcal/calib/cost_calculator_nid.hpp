@@ -6,9 +6,9 @@
 
 namespace vlcal {
 
-struct NIDParams {
-  NIDParams();
-  ~NIDParams();
+struct NIDCostParams {
+  NIDCostParams();
+  ~NIDCostParams();
 
   int bins;
   int num_threads;
@@ -16,15 +16,16 @@ struct NIDParams {
 
 class CostCalculatorNID : public CostCalculator{
 public:
-  CostCalculatorNID(const camera::GenericCameraBase::ConstPtr& proj, const VisualLiDARData::ConstPtr& data, const NIDParams& params = NIDParams());
+  CostCalculatorNID(const camera::GenericCameraBase::ConstPtr& proj, const VisualLiDARData::ConstPtr& data, const NIDCostParams& params = NIDCostParams());
   virtual ~CostCalculatorNID() override;
 
   virtual double calculate(const Eigen::Isometry3d& T_camera_lidar) override;
 
 private:
-  const NIDParams params;
+  const NIDCostParams params;
   const camera::GenericCameraBase::ConstPtr proj;
   const VisualLiDARData::ConstPtr data;
+  const double max_fov;
 };
 
 }  // namespace vlcal

@@ -13,7 +13,8 @@
 #include <guik/model_control.hpp>
 #include <guik/viewer/light_viewer.hpp>
 
-#include <vlcal/common/create_camera.hpp>
+#include <camera/create_camera.hpp>
+#include <vlcal/common/estimate_fov.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/visual_lidar_visualizer.hpp>
 
@@ -33,7 +34,7 @@ public:
     const std::string camera_model = config["camera"]["camera_model"];
     const std::vector<double> intrinsics = config["camera"]["intrinsics"];
     const std::vector<double> distortion_coeffs = config["camera"]["distortion_coeffs"];
-    proj = create_camera(camera_model, intrinsics, distortion_coeffs);
+    proj = camera::create_camera(camera_model, intrinsics, distortion_coeffs);
 
     const std::vector<std::string> bag_names = config["meta"]["bag_names"];
     for (const auto& bag_name : bag_names) {
@@ -41,7 +42,7 @@ public:
     }
 
     const auto image_size = dataset[0]->image.size();
-    std::cout << "camera_fov:" << proj->estimate_fov({image_size.width, image_size.height}) * 180.0 / M_PI << "[deg]" << std::endl;
+    std::cout << "camera_fov:" << estimate_camera_fov(proj, {image_size.width, image_size.height}) * 180.0 / M_PI << "[deg]" << std::endl;
   }
 
   void spin() {

@@ -207,22 +207,34 @@ gtsam_ext::FrameCPU::Ptr DepthContinuousEdgeExtraction::extract(const gtsam_ext:
     voxel->insert(pt);
   }
 
-  std::vector<Eigen::Vector4d> edge_points;
-  voxelgrid.forEachCell([&](const auto& voxel, const auto& coord) {
-    const auto new_points = voxel->extract(params);
-    edge_points.insert(edge_points.end(), new_points.begin(), new_points.end());
+  std::vector<DepthContinuousEdgeExtractionVoxel*> voxels;
+  voxelgrid.forEachCell([&](const auto& voxel, const auto& coord) { voxels.emplace_back(voxel.get()); });
 
-    if (plane_points) {
-      for (const auto& pts : voxel->plane_points) {
-        auto new_points = std::make_shared<gtsam_ext::FrameCPU>();
-        new_points->num_points = pts->size();
-        new_points->points_storage.resize(pts->size());
-        new_points->points = new_points->points_storage.data();
-        std::transform(pts->begin(), pts->end(), new_points->points, [](const auto& pt) { return pt.getVector4fMap().template cast<double>(); });
-        plane_points->emplace_back(new_points);
+  std::vector<Eigen::Vector4d> edge_points;
+
+#pragma omp parallel for schedule(guided, 4)
+  for (int i = 0; i < voxels.size(); i++) {
+    auto voxel = voxels[i];
+    const auto new_points = voxel->extract(params);
+    if (new_points.empty()) {
+      continue;
+    }
+
+#pragma critical
+    {
+      edge_points.insert(edge_points.end(), new_points.begin(), new_points.end());
+      if (plane_points) {
+        for (const auto& pts : voxel->plane_points) {
+          auto new_points = std::make_shared<gtsam_ext::FrameCPU>();
+          new_points->num_points = pts->size();
+          new_points->points_storage.resize(pts->size());
+          new_points->points = new_points->points_storage.data();
+          std::transform(pts->begin(), pts->end(), new_points->points, [](const auto& pt) { return pt.getVector4fMap().template cast<double>(); });
+          plane_points->emplace_back(new_points);
+        }
       }
     }
-  });
+  }
 
   return std::make_shared<gtsam_ext::FrameCPU>(edge_points);
 }

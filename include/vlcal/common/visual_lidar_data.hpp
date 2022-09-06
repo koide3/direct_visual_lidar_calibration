@@ -12,6 +12,7 @@ public:
   using Ptr = std::shared_ptr<VisualLiDARData>;
   using ConstPtr = std::shared_ptr<const VisualLiDARData>;
 
+  VisualLiDARData() {}
   VisualLiDARData(const std::string& data_path, const std::string& bag_name);
   ~VisualLiDARData();
 

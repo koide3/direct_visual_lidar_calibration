@@ -1,4 +1,4 @@
-#include <vlcal/common/create_camera.hpp>
+#include <camera/create_camera.hpp>
 
 #include <camera/atan.hpp>
 #include <camera/pinhole.hpp>
@@ -8,7 +8,7 @@
 
 #include <glim/util/console_colors.hpp>
 
-namespace vlcal {
+namespace camera {
 
 template <typename Projection>
 camera::GenericCameraBase::ConstPtr create_camera(const std::vector<double>& intrinsics, const std::vector<double>& distortion_coeffs) {

@@ -10,15 +10,18 @@
 #include <glim/util/console_colors.hpp>
 
 #include <dfo/nelder_mead.hpp>
+#include <dfo/directional_direct_search.hpp>
 
 #include <glk/primitives/primitives.hpp>
 #include <guik/viewer/light_viewer.hpp>
 
-#include <vlcal/common/create_camera.hpp>
+#include <camera/create_camera.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/points_color_updater.hpp>
 #include <vlcal/calib/cost_calculator.hpp>
 #include <vlcal/calib/cost_calculator_nid.hpp>
+#include <vlcal/calib/cost_calculator_edge.hpp>
+#include <vlcal/calib/cost_scaller.hpp>
 
 #include <vlcal/common/visual_lidar_visualizer.hpp>
 
@@ -38,7 +41,7 @@ public:
     const std::string camera_model = config["camera"]["camera_model"];
     const std::vector<double> intrinsics = config["camera"]["intrinsics"];
     const std::vector<double> distortion_coeffs = config["camera"]["distortion_coeffs"];
-    proj = create_camera(camera_model, intrinsics, distortion_coeffs);
+    proj = camera::create_camera(camera_model, intrinsics, distortion_coeffs);
 
     const std::vector<std::string> bag_names = config["meta"]["bag_names"];
     for (const auto& bag_name : bag_names) {
@@ -46,7 +49,11 @@ public:
     }
 
     for (const auto& data : dataset) {
-      costs.emplace_back(std::make_shared<CostCalculatorNID>(proj, data));
+      auto nid_cost = std::make_shared<CostCalculatorNID>(proj, data);
+      auto edge_cost = std::make_shared<CostCalculatorEdge>(proj, data);
+
+      costs.emplace_back(std::make_shared<CostScaler>(nid_cost, 100.0));
+      costs.emplace_back(std::make_shared<CostScaler>(edge_cost));
     }
   }
 
@@ -78,7 +85,7 @@ public:
 
       double sum = 0.0;
 
-#pragma omp parallel for reduction(+ : sum)
+// #pragma omp parallel for reduction(+ : sum)
       for (int i = 0; i < costs.size(); i++) {
         sum += costs[i]->calculate(T_camera_lidar);
       }
@@ -87,16 +94,28 @@ public:
         best_cost = sum;
         best_T_camera_lidar = T_camera_lidar;
         vis.set_T_camera_lidar(T_camera_lidar);
-
         viewer->append_text("best_cost:" + std::to_string(sum));
       }
 
       return sum;
     };
 
-    dfo::NelderMead<6>::Params params;
-    dfo::NelderMead<6> optimizer(params);
+    const auto callback = [&](const gtsam::Vector6& x) {
+      for(int i=0; i<costs.size(); i++) {
+        const Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar * Eigen::Isometry3d(gtsam::Pose3::Expmap(x).matrix());
+        costs[i]->update_correspondences(T_camera_lidar);
+      }
+    };
 
+    // dfo::NelderMead<6>::Params params;
+    // dfo::NelderMead<6> optimizer(params);
+
+    // dfo::OptimizationResult<6> result;
+
+    dfo::DirectionalDirectSearch<6>::Params params;
+    params.init_alpha = 1e-2;
+    dfo::DirectionalDirectSearch<6> optimizer(params);
+    optimizer.set_callback(callback);
     dfo::OptimizationResult<6> result;
 
     std::atomic_bool optimization_terminated = false;
