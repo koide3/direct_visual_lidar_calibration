@@ -8,7 +8,7 @@ namespace vlcal {
 
 PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image)
 : proj(proj),
-  max_fov(estimate_camera_fov(proj, {image.cols, image.rows}) + 3.0 * M_PI / 180.0),
+  min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows}) + 3.0 * M_PI / 180.0)),
   image(image) {
   glk::Icosahedron icosahedron;
   for (int i = 0; i < 6; i++) {
@@ -24,7 +24,7 @@ PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr
 
 PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image, const gtsam_ext::FrameCPU::ConstPtr& points)
 : proj(proj),
-  max_fov(estimate_camera_fov(proj, {image.cols, image.rows}) + 3.0 * M_PI / 180.0),
+  min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows})  + 3.0 * M_PI / 180.0)),
   image(image),
   points(points) {
   cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points->points, points->size());
@@ -38,10 +38,12 @@ PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr
 void PointsColorUpdater::update(const Eigen::Isometry3d& T_camera_liar, const double blend_weight) {
   std::shared_ptr<std::vector<Eigen::Vector4f>> colors(new std::vector<Eigen::Vector4f>(points->size(), Eigen::Vector4f::Zero()));
 
+  int num_clipped = 0;
   for (int i = 0; i < points->size(); i++) {
     const Eigen::Vector4d pt_camera = T_camera_liar * points->points[i];
 
-    if (pt_camera.head<3>().normalized().z() < std::cos(max_fov)) {
+    if (pt_camera.head<3>().normalized().z() < min_nz) {
+      num_clipped++;
       continue;
     }
 

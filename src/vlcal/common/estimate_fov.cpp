@@ -23,8 +23,8 @@ Eigen::Vector3d estimate_direction(const camera::GenericCameraBase::ConstPtr& pr
     return (pt_2d - proj->project(dir)).squaredNorm();
   };
 
-  dfo::DirectionalDirectSearch<2>::Params params;
-  dfo::DirectionalDirectSearch<2> optimizer(params);
+  dfo::NelderMead<2>::Params params;
+  dfo::NelderMead<2> optimizer(params);
   auto result = optimizer.optimize(f, Eigen::Vector2d::Zero());
 
   return to_dir(result.x);

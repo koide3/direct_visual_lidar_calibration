@@ -80,12 +80,19 @@ def main():
     if opt.show_keypoints:
       camera_canvas = cv2.cvtColor(camera_image, cv2.COLOR_GRAY2BGR)
       lidar_canvas = cv2.cvtColor(lidar_image, cv2.COLOR_GRAY2BGR)
+      lidar_canvas = cv2.resize(lidar_canvas, (camera_image.shape[1], camera_image.shape[0]))
+
+      sx = camera_image.shape[1] / lidar_image.shape[1]
+      sy = camera_image.shape[0] / lidar_image.shape[0]
+
+      kpts1[:, 0] = kpts1[:, 0] * sx + camera_image.shape[1]
+      kpts1[:, 1] = kpts1[:, 1] * sy
 
       canvas = numpy.concatenate([camera_canvas, lidar_canvas], axis=1)
       for kp in kpts0:
         cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
       for kp in kpts1:
-        cv2.circle(canvas, (int(kp[0] + lidar_image.shape[1]), kp[1]), 3, (255, 255, 255))
+        cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
     
       for i, match in enumerate(matches):
         if match < 0:
@@ -94,7 +101,7 @@ def main():
         kp0 = kpts0[i]
         kp1 = kpts1[match]
 
-        cv2.line(canvas, (kp0[0], kp0[1]), (int(kp1[0] + lidar_image.shape[1]), kp1[1]), (0, 255, 0))
+        cv2.line(canvas, (kp0[0], kp0[1]), (kp1[0], kp1[1]), (0, 255, 0))
 
       print(canvas.shape, canvas.dtype)
       cv2.imshow('canvas', canvas)
