@@ -1,6 +1,6 @@
 #pragma once
 
-#include <camera/generic_camera.hpp>
+#include <camera/generic_camera_base.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/calib/cost_calculator.hpp>
 

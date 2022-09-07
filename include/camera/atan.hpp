@@ -6,30 +6,32 @@
 namespace camera {
 
 struct ATANProjection {
-  template <typename T>
-  Eigen::Matrix<T, 2, 1> distort(const T* const distortion, const Eigen::Matrix<T, 2, 1>& pt) const {
-    const T& d0 = distortion[0];
-    T r = pt.norm();
-    if (r < 1e-3 || d0 < 1e-7) return pt;
+  template <typename T, typename T2>
+  auto distort(const T* const distortion, const Eigen::Matrix<T2, 2, 1>& pt) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {
+    const auto& d0 = distortion[0];
+    const auto r = pt.norm();
+    if (r < 1e-3 || d0 < 1e-7) {
+      return pt;
+    }
 
-    const T d1 = 1.0 / d0;
-    const T d2 = 2.0 * tan(d0 / 2.0);
-    T distortionFactor = d1 * atan(r * d2) / r;
+    const auto d1 = 1.0 / d0;
+    const auto d2 = 2.0 * tan(d0 / 2.0);
+    const auto distortion_factor = d1 * atan(r * d2) / r;
 
-    return distortionFactor * pt;
+    return distortion_factor * pt;
   }
 
   template <typename T, typename T2>
-  Eigen::Matrix<T, 2, 1> operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const {
-    Eigen::Matrix<T, 2, 1> pt_2d = point_3d.template head<2>() / point_3d.z();
-    Eigen::Matrix<T, 2, 1> pt_d = distort(distortion, pt_2d);
+  auto operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {
+    const auto pt_2d = (point_3d.template head<2>() / point_3d.z()).eval();
+    const auto pt_d = distort(distortion, pt_2d);
 
-    const T& fx = intrinsic[0];
-    const T& fy = intrinsic[1];
-    const T& cx = intrinsic[2];
-    const T& cy = intrinsic[3];
+    const auto& fx = intrinsic[0];
+    const auto& fy = intrinsic[1];
+    const auto& cx = intrinsic[2];
+    const auto& cy = intrinsic[3];
 
-    return Eigen::Matrix<T, 2, 1>(fx * pt_d[0] + cx, fy * pt_d[1] + cy);
+    return {fx * pt_d[0] + cx, fy * pt_d[1] + cy};
   }
 };
 

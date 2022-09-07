@@ -3,7 +3,7 @@
 #include <opencv2/core.hpp>
 #include <gtsam_ext/types/frame_cpu.hpp>
 #include <glk/pointcloud_buffer.hpp>
-#include <camera/generic_camera.hpp>
+#include <camera/generic_camera_base.hpp>
 
 namespace vlcal {
 

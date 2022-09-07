@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <camera/generic_camera.hpp>
+#include <camera/generic_camera_base.hpp>
 
 namespace camera {
 

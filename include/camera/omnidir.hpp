@@ -9,7 +9,7 @@ namespace camera {
 // https://github.com/opencv/opencv_contrib/blob/master/modules/ccalib/src/omnidir.cpp
 struct OmnidirectionalProjection {
   template <typename T, typename T2>
-  Eigen::Matrix<T, 2, 1> operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const {
+  auto operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {
     const auto& fx = intrinsic[0];
     const auto& fy = intrinsic[1];
     const auto& cx = intrinsic[2];
@@ -21,22 +21,21 @@ struct OmnidirectionalProjection {
     const auto& p1 = distortion[2];
     const auto& p2 = distortion[3];
 
-    Eigen::Matrix<T2, 3, 1> pt_s = point_3d.normalized();
-    Eigen::Matrix<T, 2, 1> pt_u = pt_s.template head<2>() / (pt_s.z() + xi);
+    const auto pt_s = point_3d.normalized().eval();
+    const auto pt_u = (pt_s.template head<2>() / (pt_s.z() + xi)).eval();
 
-    T r2 = pt_u.squaredNorm();
-    T r4 = r2 * r2;
+    const auto r2 = pt_u.squaredNorm();
+    const auto r4 = r2 * r2;
 
-    T dr = (1.0 + k1 * r2 + k2 * r4);
-    T x2 = pt_u[0] * pt_u[0];
-    T y2 = pt_u[1] * pt_u[1];
-    T xy = pt_u[0] * pt_u[1];
+    const auto dr = (1.0 + k1 * r2 + k2 * r4);
+    const auto x2 = pt_u[0] * pt_u[0];
+    const auto y2 = pt_u[1] * pt_u[1];
+    const auto xy = pt_u[0] * pt_u[1];
 
-    Eigen::Matrix<T, 2, 1> pt_d;
-    pt_d[0] = pt_u[0] * dr + 2.0 * p1 * xy + p2 * (r2 + 2.0 * x2);
-    pt_d[1] = pt_u[1] * dr + p1 * (r2 + 2.0 * y2) + 2.0 * p2 * xy;
+    const auto nx = pt_u[0] * dr + 2.0 * p1 * xy + p2 * (r2 + 2.0 * x2);
+    const auto ny = pt_u[1] * dr + p1 * (r2 + 2.0 * y2) + 2.0 * p2 * xy;
 
-    return Eigen::Matrix<T, 2, 1>(fx * pt_d[0] + cx, fy * pt_d[1] + cy);
+    return {fx * nx + cx, fy * ny + cy};
   }
 };
 

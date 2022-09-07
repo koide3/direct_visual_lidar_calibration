@@ -7,3 +7,6 @@
 [submodule "thirdparty/nanoflann"]
 	path = thirdparty/nanoflann
 	url = https://github.com/jlblancoc/nanoflann.git
+[submodule "thirdparty/Sophus"]
+	path = thirdparty/Sophus
+	url = https://github.com/strasdat/Sophus.git

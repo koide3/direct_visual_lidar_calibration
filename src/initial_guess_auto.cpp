@@ -14,7 +14,7 @@
 
 #include <camera/create_camera.hpp>
 #include <vlcal/common/estimate_fov.hpp>
-#include <vlcal/common/estimate_rotation.hpp>
+#include <vlcal/common/estimate_pose.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 
 namespace vlcal {
@@ -107,49 +107,14 @@ public:
   }
 
   void estimate_and_save(const boost::program_options::variables_map& vm) {
-    std::cout << "running 3DoF RANSAC" << std::endl;
-    const auto [num_inliers, R_camera_lidar] = estimate_rotation_ransac(proj, correspondences, vm["ransac_error_thresh"].as<double>(), vm["ransac_iterations"].as<int>());
+    PoseEstimationParams params;
+    PoseEstimation pose_estimation(params);
 
-    std::cout << "--- R_camera_lidar ---" << std::endl << R_camera_lidar << std::endl;
-    std::cout << "num_inliers: " << num_inliers << " / " << correspondences.size() << std::endl;
+    std::vector<bool> inliers;
+    Eigen::Isometry3d T_camera_lidar = pose_estimation.estimate(proj, correspondences, &inliers);
 
-    std::cout << "running 6DoF fine estimation" << std::endl;
-    Eigen::Isometry3d T_camera_lidar0 = Eigen::Isometry3d::Identity();
-    T_camera_lidar0.linear() = R_camera_lidar;
 
-    const double kernel_width = vm["kernel_width"].as<double>();
-    const auto f = [&](const gtsam::Vector6& x) {
-      const Eigen::Isometry3d T_camera_lidar = T_camera_lidar0 * Eigen::Isometry3d(gtsam::Pose3::Expmap(x).matrix());
-
-      const auto robust_kernel = [](double x, double w) {
-        if (x < w) {
-          return x * x / 2;
-        } else {
-          return w * (x - w / 2);
-        }
-      };
-
-      double sum_errors = 0.0;
-      for (int i = 0; i < correspondences.size(); i++) {
-        const auto& [pt_2d, pt_3d] = correspondences[i];
-
-        const Eigen::Vector2d pt_projected = proj->project((T_camera_lidar * pt_3d).head<3>());
-        sum_errors += robust_kernel((pt_2d - pt_projected).norm(), kernel_width);
-      }
-
-      return sum_errors;
-    };
-
-    dfo::NelderMead<6>::Params params;
-    dfo::NelderMead<6> optimizer(params);
-    auto result = optimizer.optimize(f, gtsam::Vector6::Zero());
-
-    const Eigen::Isometry3d T_camera_lidar = T_camera_lidar0 * Eigen::Isometry3d(gtsam::Pose3::Expmap(result.x).matrix());
     const Eigen::Isometry3d T_lidar_camera = T_camera_lidar.inverse();
-
-    std::cout << "--- T_camera_lidar ---" << std::endl << T_camera_lidar.matrix() << std::endl;
-    std::cout << "--- T_lidar_camera ---" << std::endl << T_lidar_camera.matrix() << std::endl;
-
     const Eigen::Vector3d trans = T_lidar_camera.translation();
     const Eigen::Quaterniond quat = Eigen::Quaterniond(T_lidar_camera.linear()).normalized();
     const std::vector<double> values = {trans.x(), trans.y(), trans.z(), quat.x(), quat.y(), quat.z(), quat.w()};

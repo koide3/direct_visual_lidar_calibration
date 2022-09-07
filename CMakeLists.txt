@@ -12,6 +12,7 @@ endif()
 find_package(catkin REQUIRED COMPONENTS rosbag sensor_msgs cv_bridge)
 
 find_package(PCL REQUIRED)
+find_package(Ceres REQUIRED)
 find_package(glim REQUIRED)
 find_package(Iridescence REQUIRED)
 
@@ -35,7 +36,7 @@ catkin_package(
 add_library(direct_visual_lidar_calibration SHARED
   src/camera/create_camera.cpp
   src/vlcal/common/estimate_fov.cpp
-  src/vlcal/common/estimate_rotation.cpp
+  src/vlcal/common/estimate_pose.cpp
   src/vlcal/common/points_color_updater.cpp
   src/vlcal/common/visual_lidar_data.cpp
   src/vlcal/common/visual_lidar_visualizer.cpp
@@ -53,12 +54,15 @@ target_include_directories(direct_visual_lidar_calibration PUBLIC
   thirdparty/json/include
   thirdparty/Bonxai/include
   thirdparty/nanoflann/include
+  thirdparty/Sophus
   ${PCL_INCLUDE_DIRS}
   ${glim_INCLUDE_DIRS}
   ${Iridescence_INCLUDE_DIRS}
 )
 target_link_libraries(direct_visual_lidar_calibration
+  fmt
   ${PCL_LIBRARIES}
+  ${CERES_LIBRARIES}
   ${glim_LIBRARIES}
   ${Iridescence_LIBRARIES}
 )

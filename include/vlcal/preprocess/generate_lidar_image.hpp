@@ -1,8 +1,8 @@
 #pragma once
 
 #include <opencv2/core.hpp>
-#include <camera/generic_camera.hpp>
 #include <gtsam_ext/types/frame.hpp>
+#include <camera/generic_camera_base.hpp>
 
 namespace vlcal {
 

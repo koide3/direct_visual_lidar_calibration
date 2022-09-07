@@ -3,7 +3,7 @@
 #include <mutex>
 #include <atomic>
 #include <thread>
-#include <camera/generic_camera.hpp>
+#include <camera/generic_camera_base.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/points_color_updater.hpp>
 

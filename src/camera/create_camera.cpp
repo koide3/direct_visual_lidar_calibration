@@ -1,10 +1,13 @@
 #include <camera/create_camera.hpp>
 
+#include <ceres/jet.h>
+
 #include <camera/atan.hpp>
 #include <camera/pinhole.hpp>
 #include <camera/fisheye.hpp>
 #include <camera/omnidir.hpp>
 #include <camera/equirectangular.hpp>
+#include <camera/generic_camera.hpp>
 
 #include <glim/util/console_colors.hpp>
 
@@ -44,4 +47,4 @@ camera::GenericCameraBase::ConstPtr create_camera(const std::string& camera_mode
   return nullptr;
 }
 
-}  // namespace vlcal
+}  // namespace camera
