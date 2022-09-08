@@ -8,6 +8,7 @@ import json
 import torch
 import numpy
 import argparse
+import matplotlib
 from models.matching import Matching
 from models.utils import (make_matching_plot_fast, frame2tensor)
 
@@ -17,7 +18,7 @@ def main():
   print('\033[93m' + '****************************************************************************************************' + '\033[0m')
 
   parser = argparse.ArgumentParser(description='Initial guess estimation based on SuperGlue', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument('--data_path', help='Input data path')
+  parser.add_argument('data_path', help='Input data path')
   parser.add_argument('--superglue', choices={'indoor', 'outdoor'}, default='outdoor', help='SuperGlue weights')
   parser.add_argument('--max_keypoints', type=int, default=-1, help='Maximum number of keypoints detected by Superpoint' ' (\'-1\' keeps all keypoints)')
   parser.add_argument('--keypoint_threshold', type=float, default=0.05, help='SuperPoint keypoint detector confidence threshold')
@@ -77,33 +78,40 @@ def main():
     with open('%s/%s_matches.json' % (data_path, bag_name), 'w') as f:
       json.dump(result, f)
 
-    if opt.show_keypoints:
-      camera_canvas = cv2.cvtColor(camera_image, cv2.COLOR_GRAY2BGR)
-      lidar_canvas = cv2.cvtColor(lidar_image, cv2.COLOR_GRAY2BGR)
-      lidar_canvas = cv2.resize(lidar_canvas, (camera_image.shape[1], camera_image.shape[0]))
+    # visualization
+    camera_canvas = cv2.cvtColor(camera_image, cv2.COLOR_GRAY2BGR)
+    lidar_canvas = cv2.cvtColor(lidar_image, cv2.COLOR_GRAY2BGR)
+    lidar_canvas = cv2.resize(lidar_canvas, (camera_image.shape[1], camera_image.shape[0]))
 
-      sx = camera_image.shape[1] / lidar_image.shape[1]
-      sy = camera_image.shape[0] / lidar_image.shape[0]
+    sx = camera_image.shape[1] / lidar_image.shape[1]
+    sy = camera_image.shape[0] / lidar_image.shape[0]
 
-      kpts1[:, 0] = kpts1[:, 0] * sx + camera_image.shape[1]
-      kpts1[:, 1] = kpts1[:, 1] * sy
+    kpts1[:, 0] = kpts1[:, 0] * sx + camera_image.shape[1]
+    kpts1[:, 1] = kpts1[:, 1] * sy
 
-      canvas = numpy.concatenate([camera_canvas, lidar_canvas], axis=1)
-      for kp in kpts0:
-        cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
-      for kp in kpts1:
-        cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
-    
-      for i, match in enumerate(matches):
-        if match < 0:
-          continue
+    canvas = numpy.concatenate([camera_canvas, lidar_canvas], axis=1)
+    for kp in kpts0:
+      cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
+    for kp in kpts1:
+      cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
+
+    cmap = matplotlib.cm.get_cmap('turbo')
+    confidence = confidence / numpy.max(confidence)
+
+    for i, match in enumerate(matches):
+      if match < 0:
+        continue
       
-        kp0 = kpts0[i]
-        kp1 = kpts1[match]
+      kp0 = kpts0[i]
+      kp1 = kpts1[match]
 
-        cv2.line(canvas, (kp0[0], kp0[1]), (kp1[0], kp1[1]), (0, 255, 0))
+      color = tuple((numpy.array(cmap(confidence[i])) * 255).astype(numpy.int).tolist())
 
-      print(canvas.shape, canvas.dtype)
+      cv2.line(canvas, (kp0[0], kp0[1]), (kp1[0], kp1[1]), color)
+
+    cv2.imwrite('%s/%s_superglue.png' % (data_path, bag_name), canvas)
+
+    if opt.show_keypoints:
       cv2.imshow('canvas', canvas)
       cv2.waitKey(0)
 

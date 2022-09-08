@@ -11,10 +11,12 @@ struct PoseEstimationParams {
   PoseEstimationParams() {
     ransac_iterations = 8192;
     ransac_error_thresh = 5.0;
+    robust_kernel_width = 10.0;
   }
 
   int ransac_iterations;
   double ransac_error_thresh;
+  double robust_kernel_width;
 };
 
 std::pair<int, Eigen::Matrix3d> estimate_rotation_ransac(

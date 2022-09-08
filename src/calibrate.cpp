@@ -16,14 +16,11 @@
 #include <guik/viewer/light_viewer.hpp>
 
 #include <camera/create_camera.hpp>
+#include <vlcal/costs/nid_cost.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/points_color_updater.hpp>
-#include <vlcal/calib/cost_calculator.hpp>
-#include <vlcal/calib/cost_calculator_nid.hpp>
-#include <vlcal/calib/cost_calculator_edge.hpp>
-#include <vlcal/calib/cost_scaller.hpp>
-
 #include <vlcal/common/visual_lidar_visualizer.hpp>
+#include <vlcal/calib/visual_camera_calibration.hpp>
 
 namespace vlcal {
 
@@ -48,10 +45,6 @@ public:
       dataset.emplace_back(std::make_shared<VisualLiDARData>(data_path, bag_name));
     }
 
-    for (const auto& data : dataset) {
-      auto nid_cost = std::make_shared<CostCalculatorNID>(proj, data);
-      costs.emplace_back(nid_cost);
-    }
   }
 
   void calibrate() {
@@ -70,47 +63,18 @@ public:
     VisualLiDARVisualizer vis(proj, dataset, false);
     vis.set_T_camera_lidar(init_T_camera_lidar);
 
-    double best_cost = std::numeric_limits<double>::max();
-    Eigen::Isometry3d best_T_camera_lidar = init_T_camera_lidar;
-
     auto viewer = guik::LightViewer::instance();
     viewer->set_draw_xy_grid(false);
     viewer->use_arcball_camera_control();
 
-    const auto evaluate = [&](const gtsam::Vector6& x) {
-      const Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar * Eigen::Isometry3d(gtsam::Pose3::Expmap(x).matrix());
-
-      double sum = 0.0;
-
-#pragma omp parallel for reduction(+ : sum)
-      for (int i = 0; i < costs.size(); i++) {
-        sum += costs[i]->calculate(T_camera_lidar);
-      }
-
-      if (sum < best_cost) {
-        best_cost = sum;
-        best_T_camera_lidar = T_camera_lidar;
-        vis.set_T_camera_lidar(T_camera_lidar);
-        viewer->append_text("best_cost:" + std::to_string(sum));
-      }
-
-      return sum;
-    };
-
-    const auto callback = [&](const gtsam::Vector6& x) {
-      for(int i=0; i<costs.size(); i++) {
-        const Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar * Eigen::Isometry3d(gtsam::Pose3::Expmap(x).matrix());
-        costs[i]->update_correspondences(T_camera_lidar);
-      }
-    };
-
-    dfo::NelderMead<6>::Params params;
-    dfo::NelderMead<6> optimizer(params);
-    dfo::OptimizationResult<6> result;
+    VisualCameraCalibrationParams params;
+    params.callback = [&](const Eigen::Isometry3d& T_camera_lidar) { vis.set_T_camera_lidar(T_camera_lidar); };
+    VisualCameraCalibration calib(proj, dataset, params);
 
     std::atomic_bool optimization_terminated = false;
+    Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar;
     std::thread optimization_thread([&] {
-      result = optimizer.optimize(evaluate, gtsam::Vector6::Zero());
+      T_camera_lidar = calib.calibrate(init_T_camera_lidar);
       optimization_terminated = true;
     });
 
@@ -120,7 +84,6 @@ public:
 
     optimization_thread.join();
 
-    const Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar * Eigen::Isometry3d(gtsam::Pose3::Expmap(result.x).matrix());
     const Eigen::Isometry3d T_lidar_camera = T_camera_lidar.inverse();
     const Eigen::Vector3d trans(T_lidar_camera.translation());
     const Eigen::Quaterniond quat(T_lidar_camera.linear());
@@ -150,8 +113,6 @@ private:
 
   camera::GenericCameraBase::ConstPtr proj;
   std::vector<VisualLiDARData::ConstPtr> dataset;
-
-  std::vector<CostCalculator::Ptr> costs;
 };
 
 }  // namespace vlcal

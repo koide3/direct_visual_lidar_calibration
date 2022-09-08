@@ -13,6 +13,7 @@ public:
   using ConstPtr = std::shared_ptr<const VisualLiDARData>;
 
   VisualLiDARData() {}
+  VisualLiDARData(const cv::Mat& image, const gtsam_ext::FrameCPU::Ptr& points) : image(image), points(points) {}
   VisualLiDARData(const std::string& data_path, const std::string& bag_name);
   ~VisualLiDARData();
 

@@ -48,6 +48,8 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/calib/edge_extraction.cpp
   src/vlcal/calib/nearest_neighbor_search.cpp
   src/vlcal/calib/line_fitting.cpp
+  src/vlcal/calib/view_culling.cpp
+  src/vlcal/calib/visual_camera_calibration.cpp
 )
 target_include_directories(direct_visual_lidar_calibration PUBLIC
   include
@@ -116,13 +118,16 @@ target_link_libraries(calibrate
 )
 
 
-add_executable(gen_image
-  src/gen_image.cpp
+
+################ test code ################
+add_executable(reference
+  src/test/reference.cpp
+  src/test/detect_sphere.cpp
 )
-target_include_directories(gen_image PRIVATE
+target_include_directories(reference PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(gen_image
+target_link_libraries(reference
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )

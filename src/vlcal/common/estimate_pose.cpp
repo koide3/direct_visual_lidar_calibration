@@ -9,6 +9,7 @@
 #include <sophus/ceres_local_parameterization.hpp>
 
 #include <vlcal/common/estimate_fov.hpp>
+#include <vlcal/costs/reprojection_cost.hpp>
 
 namespace vlcal {
 
@@ -116,6 +117,8 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
     }
   }
 
+  std::cout << "num_inliers: " << best_num_inliers << " / " << correspondences.size() << std::endl;
+
   if (inliers) {
     inliers->resize(correspondences.size());
     for (int i = 0; i < correspondences.size(); i++) {
@@ -128,32 +131,6 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
   return best_R_camera_lidar.topLeftCorner<3, 3>(0, 0);
 }
 
-class ReprojectionError {
-public:
-  ReprojectionError(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector3d& point_3d, const Eigen::Vector2d& point_2d)
-  : proj(proj),
-    point_3d(point_3d),
-    point_2d(point_2d) {}
-
-  ~ReprojectionError() {}
-
-  template <typename T>
-  bool operator()(const T* const T_camera_lidar_params, T* residual) const {
-    const Eigen::Map<Sophus::SE3<T> const> T_camera_lidar(T_camera_lidar_params);
-    const Eigen::Matrix<T, 3, 1> pt_camera = T_camera_lidar * point_3d;
-
-    const auto pt_2d = (*proj)(pt_camera);
-
-    residual[0] = pt_2d[0] - point_2d[0];
-    residual[1] = pt_2d[1] - point_2d[1];
-    return true;
-  }
-
-private:
-  const camera::GenericCameraBase::ConstPtr proj;
-  const Eigen::Vector3d point_3d;
-  const Eigen::Vector2d point_2d;
-};
 
 Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
   const camera::GenericCameraBase::ConstPtr& proj,
@@ -168,9 +145,9 @@ Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
   // problem.AddParameterBlock(T_camera_lidar.data(), Sophus::SE3d::num_parameters, new Sophus::Manifold<Sophus::SE3>());
 
   for (const auto& [pt_2d, pt_3d] : correspondences) {
-    auto reproj_error = new ReprojectionError(proj, pt_3d.head<3>(), pt_2d);
-    auto ad_cost = new ceres::AutoDiffCostFunction<ReprojectionError, 2, Sophus::SE3d::num_parameters>(reproj_error);
-    auto loss = new ceres::CauchyLoss(10.0);
+    auto reproj_error = new ReprojectionCost(proj, pt_3d.head<3>(), pt_2d);
+    auto ad_cost = new ceres::AutoDiffCostFunction<ReprojectionCost, 2, Sophus::SE3d::num_parameters>(reproj_error);
+    auto loss = new ceres::CauchyLoss(params.robust_kernel_width);
     problem.AddResidualBlock(ad_cost, loss, T_camera_lidar.data());
   }
 

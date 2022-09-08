@@ -17,6 +17,7 @@
 #include <vlcal/common/estimate_fov.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/visual_lidar_visualizer.hpp>
+#include <vlcal/common/estimate_pose.hpp>
 
 namespace vlcal {
 

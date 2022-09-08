@@ -108,11 +108,14 @@ public:
 
   void estimate_and_save(const boost::program_options::variables_map& vm) {
     PoseEstimationParams params;
+    params.ransac_iterations = vm["ransac_iterations"].as<int>();
+    params.ransac_error_thresh = vm["ransac_error_thresh"].as<double>();
+    params.robust_kernel_width = vm["robust_kernel_width"].as<double>();
+
     PoseEstimation pose_estimation(params);
 
     std::vector<bool> inliers;
     Eigen::Isometry3d T_camera_lidar = pose_estimation.estimate(proj, correspondences, &inliers);
-
 
     const Eigen::Isometry3d T_lidar_camera = T_camera_lidar.inverse();
     const Eigen::Vector3d trans = T_lidar_camera.translation();
@@ -153,8 +156,8 @@ int main(int argc, char** argv) {
     ("help", "produce help message")
     ("data_path", value<std::string>(), "directory that contains preprocessed data")
     ("ransac_iterations", value<int>()->default_value(8192), "iterations for RANSAC")
-    ("ransac_error_thresh", value<double>()->default_value(5.0), "reprojection error threshold [pix]")
-    ("kernel_width", value<double>()->default_value(10.0), "Huber kernel width for fine estimation [pix]")
+    ("ransac_error_thresh", value<double>()->default_value(10.0), "reprojection error threshold [pix]")
+    ("robust_kernel_width", value<double>()->default_value(10.0), "Cauchy kernel width for fine estimation [pix]")
   ;
   // clang-format on
 

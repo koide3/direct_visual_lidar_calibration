@@ -417,6 +417,9 @@ int main(int argc, char** argv) {
     std::cout << "processed " << bag_filename << std::endl;
   }
 
+  std::cout << "lidar_points:" << lidar_points.size() << std::endl;
+  std::cout << "lidar_points[0]:" << lidar_points.front()->size() << std::endl;
+
   // Generate LiDAR images
   const double lidar_fov = vlcal::estimate_lidar_fov(lidar_points.front());
   Eigen::Vector2i lidar_image_size;

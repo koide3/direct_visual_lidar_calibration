@@ -97,6 +97,7 @@ public:
     }
 
     result.x = x[0].template tail<N>();
+    result.y = x[0][0];
     return result;
   }
 
