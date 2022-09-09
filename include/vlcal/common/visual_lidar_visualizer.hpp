@@ -11,10 +11,12 @@ namespace vlcal {
 
 class VisualLiDARVisualizer {
 public:
-  VisualLiDARVisualizer(const camera::GenericCameraBase::ConstPtr& proj, const std::vector<VisualLiDARData::ConstPtr>& dataset, const bool draw_sphere);
+  VisualLiDARVisualizer(const camera::GenericCameraBase::ConstPtr& proj, const std::vector<VisualLiDARData::ConstPtr>& dataset, const bool draw_sphere, const bool show_image_cv = false);
   ~VisualLiDARVisualizer();
 
   void set_T_camera_lidar(const Eigen::Isometry3d& T_camera_lidar);
+
+  int get_selected_bag_id() const { return selected_bag_id; }
 
   bool spin_once();
 
@@ -24,6 +26,7 @@ private:
 
 private:
   const bool draw_sphere;
+  const bool show_image_cv;
 
   const camera::GenericCameraBase::ConstPtr proj;
   const std::vector<VisualLiDARData::ConstPtr> dataset;

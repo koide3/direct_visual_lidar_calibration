@@ -70,16 +70,16 @@ public:
 
     const Eigen::Isometry3d init_T_camera_lidar = init_T_lidar_camera.inverse();
 
-    guik::LightViewer::instance()->use_arcball_camera_control();
-    VisualLiDARVisualizer vis(proj, dataset, false);
-    vis.set_T_camera_lidar(init_T_camera_lidar);
-
-    auto viewer = guik::LightViewer::instance();
+    auto viewer = guik::LightViewer::instance(Eigen::Vector2i(-1, -1), vm.count("background"));
     viewer->set_draw_xy_grid(false);
     viewer->use_arcball_camera_control();
 
+    VisualLiDARVisualizer vis(proj, dataset, false);
+    vis.set_T_camera_lidar(init_T_camera_lidar);
+
     VisualCameraCalibrationParams params;
     params.disable_z_buffer_culling = vm.count("disable_culling");
+    params.nid_bins = vm["nid_bins"].as<int>();
     params.nelder_mead_init_step = vm["nelder_mead_init_step"].as<double>();
     params.nelder_mead_convergence_criteria = vm["nelder_mead_convergence_criteria"].as<double>();
 
@@ -145,9 +145,11 @@ int main(int argc, char** argv) {
     ("help", "produce help message")
     ("data_path", value<std::string>(), "directory that contains preprocessed data")
     ("disable_culling", "disable depth buffer-based hidden points removal")
+    ("nid_bins", value<int>()->default_value(10), "Number of histogram bins for NID")
     ("nelder_mead_init_step", value<double>()->default_value(1e-3), "Nelder-mead initial step size")
     ("nelder_mead_convergence_criteria", value<double>()->default_value(1e-8), "Nelder-mead convergence criteria")
     ("auto_quit", "automatically quit after calibration")
+    ("background", "hide viewer and run calibration in background")
   ;
   // clang-format on
 

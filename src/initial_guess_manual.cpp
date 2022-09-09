@@ -2,13 +2,17 @@
 #include <thread>
 #include <fstream>
 #include <iostream>
+#include <boost/format.hpp>
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 #include <boost/program_options.hpp>
 
 #include <nlohmann/json.hpp>
 #include <glim/util/console_colors.hpp>
 #include <gtsam_ext/types/frame_cpu.hpp>
 
+#include <glk/primitives/primitives.hpp>
 #include <glk/pointcloud_buffer.hpp>
 #include <guik/model_control.hpp>
 #include <guik/viewer/light_viewer.hpp>
@@ -20,6 +24,52 @@
 #include <vlcal/common/estimate_pose.hpp>
 
 namespace vlcal {
+
+struct PickingPoseEstimation {
+public:
+  PickingPoseEstimation(const camera::GenericCameraBase::ConstPtr& proj) : proj(proj) {}
+  ~PickingPoseEstimation() {}
+
+  void pick_point_2d(const Eigen::Vector2d& pt) {
+    guik::LightViewer::instance()->append_text((boost::format("picked_2d: %.1f %.1f") % pt.x() % pt.y()).str());
+    picked_pt_2d = pt;
+  }
+  void pick_point_3d(const Eigen::Vector4d& pt) {
+    guik::LightViewer::instance()->append_text((boost::format("picked_3d: %.1f %.1f %.1f") % pt.x() % pt.y() % pt.z()).str());
+    picked_pt_3d = pt;
+  }
+
+  void add() {
+    if (!picked_pt_2d || !picked_pt_3d) {
+      guik::LightViewer::instance()->append_text("2D/3D points are not picked yet");
+      return;
+    }
+
+    guik::LightViewer::instance()->append_text("2D/3D correspondence added");
+    correspondences.emplace_back(*picked_pt_2d, *picked_pt_3d);
+    picked_pt_2d = std::nullopt;
+    picked_pt_3d = std::nullopt;
+  }
+
+  std::optional<Eigen::Isometry3d> estimate() {
+    if (correspondences.size() < 3) {
+      guik::LightViewer::instance()->append_text("At least 3 correspondences are necessary!!");
+      return std::nullopt;
+    }
+
+    PoseEstimationParams params;
+    PoseEstimation est(params);
+    return est.estimate(proj, correspondences);
+  }
+
+public:
+  const camera::GenericCameraBase::ConstPtr proj;
+
+  std::optional<Eigen::Vector2d> picked_pt_2d;
+  std::optional<Eigen::Vector4d> picked_pt_3d;
+  std::vector<std::pair<Eigen::Vector2d, Eigen::Vector4d>> correspondences;
+};
+
 
 class InitialGuessManual {
 public:
@@ -44,11 +94,15 @@ public:
 
     const auto image_size = dataset[0]->image.size();
     std::cout << "camera_fov:" << estimate_camera_fov(proj, {image_size.width, image_size.height}) * 180.0 / M_PI << "[deg]" << std::endl;
+
+    vis.reset(new VisualLiDARVisualizer(proj, dataset, true, true));
+    picking.reset(new PickingPoseEstimation(proj));
+
+    cv::namedWindow("image");
+    cv::setMouseCallback("image", &InitialGuessManual::mouse_callback, this);
   }
 
   void spin() {
-    VisualLiDARVisualizer vis(proj, dataset, true);
-
     const std::string camera_model = config["camera"]["camera_model"];
     Eigen::Isometry3d init_T_lidar_camera = Eigen::Isometry3d::Identity();
     if (camera_model != "equirectangular") {
@@ -60,14 +114,34 @@ public:
     auto viewer = guik::LightViewer::instance();
     guik::ModelControl T_lidar_camera_gizmo("T_lidar_camera", init_T_lidar_camera.matrix().cast<float>());
     viewer->register_ui_callback("gizmo", [&] {
+      auto& io = ImGui::GetIO();
+      if (!io.WantCaptureMouse && io.MouseClicked[1]) {
+        const float depth = viewer->pick_depth({io.MousePos[0], io.MousePos[1]});
+        if (depth > -1.0f && depth < 1.0f) {
+          const Eigen::Vector3f pt_3d = viewer->unproject({io.MousePos[0], io.MousePos[1]}, depth);
+          picking->pick_point_3d(Eigen::Vector4d(pt_3d.x(), pt_3d.y(), pt_3d.z(), 1.0));
+          viewer->update_drawable("picked", glk::Primitives::sphere(), guik::FlatRed().translate(pt_3d).scale(0.05f));
+        }
+      }
+
       ImGui::Begin("control", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
       T_lidar_camera_gizmo.draw_gizmo();
       T_lidar_camera_gizmo.draw_gizmo_ui();
+      vis->set_T_camera_lidar(Eigen::Isometry3d(T_lidar_camera_gizmo.model_matrix().cast<double>().inverse()));
 
-      vis.set_T_camera_lidar(Eigen::Isometry3d(T_lidar_camera_gizmo.model_matrix().cast<double>().inverse()));
+      if (ImGui::Button("Add picked points")) {
+        picking->add();
+      }
 
-      if (ImGui::Button("save")) {
+      if (ImGui::Button("Estimate")) {
+        const auto T_camera_lidar = picking->estimate();
+        if (T_camera_lidar) {
+          T_lidar_camera_gizmo.set_model_matrix(T_camera_lidar->inverse().matrix().cast<float>());
+        }
+      }
+
+      if (ImGui::Button("Save")) {
         const Eigen::Isometry3d T_lidar_camera(T_lidar_camera_gizmo.model_matrix().cast<double>());
         const Eigen::Vector3d trans = T_lidar_camera.translation();
         const Eigen::Quaterniond quat(T_lidar_camera.linear());
@@ -94,8 +168,28 @@ public:
       ImGui::End();
     });
 
-    while (vis.spin_once()) {
+    while (vis->spin_once()) {
+      cv::waitKey(1);
     }
+  }
+
+  void on_mouse(int event, int x, int y, int flags) {
+    if (event != cv::EVENT_RBUTTONDOWN) {
+      return;
+    }
+
+    cv::Mat canvas;
+    cv::cvtColor(dataset[vis->get_selected_bag_id()]->image, canvas, cv::COLOR_GRAY2BGR);
+    cv::line(canvas, {x - 5, y - 5}, {x + 5, y + 5}, cv::Scalar(0, 255, 0));
+    cv::line(canvas, {x + 5, y - 5}, {x - 5, y + 5}, cv::Scalar(0, 255, 0));
+    cv::imshow("image", canvas);
+
+    picking->pick_point_2d({x, y});
+  }
+
+  static void mouse_callback(int event, int x, int y, int flags, void* userdata) {
+    InitialGuessManual* inst = reinterpret_cast<InitialGuessManual*>(userdata);
+    inst->on_mouse(event, x, y, flags);
   }
 
 private:
@@ -104,6 +198,9 @@ private:
 
   camera::GenericCameraBase::ConstPtr proj;
   std::vector<VisualLiDARData::ConstPtr> dataset;
+
+  std::unique_ptr<VisualLiDARVisualizer> vis;
+  std::unique_ptr<PickingPoseEstimation> picking;
 };
 
 }  // namespace vlcal

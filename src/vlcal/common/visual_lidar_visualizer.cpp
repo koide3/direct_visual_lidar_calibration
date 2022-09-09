@@ -1,11 +1,17 @@
 #include <vlcal/common/visual_lidar_visualizer.hpp>
 
+#include <opencv2/highgui.hpp>
 #include <guik/viewer/light_viewer.hpp>
 
 namespace vlcal {
 
-VisualLiDARVisualizer::VisualLiDARVisualizer(const camera::GenericCameraBase::ConstPtr& proj, const std::vector<VisualLiDARData::ConstPtr>& dataset, const bool draw_sphere)
+VisualLiDARVisualizer::VisualLiDARVisualizer(
+  const camera::GenericCameraBase::ConstPtr& proj,
+  const std::vector<VisualLiDARData::ConstPtr>& dataset,
+  const bool draw_sphere,
+  const bool show_image_cv)
 : draw_sphere(draw_sphere),
+  show_image_cv(show_image_cv),
   proj(proj),
   dataset(dataset),
   T_camera_lidar(Eigen::Isometry3d::Identity()) {
@@ -51,6 +57,10 @@ void VisualLiDARVisualizer::ui_callback() {
     if (draw_sphere) {
       sphere_updater.reset(new PointsColorUpdater(proj, dataset[selected_bag_id]->image));
       viewer->update_drawable("sphere", sphere_updater->cloud_buffer, guik::VertexColor());
+    }
+
+    if(show_image_cv) {
+      cv::imshow("image", dataset[selected_bag_id]->image);
     }
   }
   ImGui::DragFloat("blend_weight", &blend_weight, 0.01f, 0.0f, 1.0f);

@@ -16,6 +16,8 @@ public:
 
     disable_z_buffer_culling = false;
 
+    nid_bins = 10;
+
     nelder_mead_init_step = 1e-3;
     nelder_mead_convergence_criteria = 1e-8;
   }
@@ -27,6 +29,8 @@ public:
   double delta_rot_thresh;
 
   bool disable_z_buffer_culling;
+
+  int nid_bins;
 
   double nelder_mead_init_step;
   double nelder_mead_convergence_criteria;

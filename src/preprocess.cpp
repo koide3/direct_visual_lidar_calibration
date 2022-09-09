@@ -312,7 +312,8 @@ int main(int argc, char** argv) {
     ("help", "produce help message")
     ("data_path", value<std::string>(), "directory that contains rosbags for calibration")
     ("dst_path", value<std::string>(), "directory to save preprocessed data")
-    ("bag_id", value<int>()->default_value(-1), "specify the bag to use (just for evaluation)")
+    ("bag_id", value<int>(), "specify the bag to use (just for evaluation)")
+    ("first_n_bags", value<int>(), "use only the first N bags (just for evaluation)")
     ("auto_topic,a", "automatically select topics")
     ("dynamic_lidar_integration,d", "create target point cloud from dynamic LiDAR data (for velodyne-like LiDARs)")
     ("intensity_channel,i", value<std::string>()->default_value("auto"), "auto or channel name")
@@ -363,12 +364,23 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  const int bag_id = vm["bag_id"].as<int>();
-  if (bag_id >= 0) {
-    std::sort(bag_filenames.begin(), bag_filenames.end());
+  std::sort(bag_filenames.begin(), bag_filenames.end());
+
+  if (vm.count("bag_id")) {
+    const int bag_id = vm["bag_id"].as<int>();
     std::cerr << glim::console::bold_yellow << "use only " << bag_filenames[bag_id] << glim::console::reset << std::endl;
     const std::string bag_filename = bag_filenames[bag_id];
     bag_filenames = {bag_filename};
+  }
+
+  if (vm.count("first_n_bags")) {
+    const int first_n_bags = vm["first_n_bags"].as<int>();
+    bag_filenames.erase(bag_filenames.begin() + first_n_bags, bag_filenames.end());
+
+    std::cerr << glim::console::bold_yellow << "use only the following rosbags:" << glim::console::reset << std::endl;
+    for (const auto& bag_filename : bag_filenames) {
+      std::cerr << glim::console::bold_yellow << "- " << bag_filename << glim::console::reset << std::endl;
+    }
   }
 
   // topics

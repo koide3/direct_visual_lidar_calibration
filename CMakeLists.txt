@@ -131,3 +131,14 @@ target_link_libraries(reference
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )
+
+add_executable(normalization
+  src/test/normalization.cpp
+)
+target_include_directories(normalization PRIVATE
+  ${catkin_INCLUDE_DIRS}
+)
+target_link_libraries(normalization
+  direct_visual_lidar_calibration
+  ${catkin_LIBRARIES}
+)

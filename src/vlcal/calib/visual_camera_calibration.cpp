@@ -53,7 +53,10 @@ Eigen::Isometry3d VisualCameraCalibration::estimate_pose(const Eigen::Isometry3d
   for (const auto& data : dataset) {
     auto culled_points = view_culling.cull(data->points, init_T_camera_lidar);
     auto new_data = std::make_shared<VisualLiDARData>(data->image, culled_points);
-    costs.emplace_back(std::make_shared<CostCalculatorNID>(proj, new_data));
+
+    NIDCostParams nid_params;
+    nid_params.bins = params.nid_bins;
+    costs.emplace_back(std::make_shared<CostCalculatorNID>(proj, new_data, nid_params));
 
     auto viewer = guik::LightViewer::instance();
     viewer->invoke([=] {
