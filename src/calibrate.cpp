@@ -47,12 +47,22 @@ public:
 
   }
 
-  void calibrate() {
-    if (!config.count("results") || !config["results"].count("init_T_lidar_camera")) {
+  void calibrate(const boost::program_options::variables_map& vm) {
+    std::vector<double> init_values;
+    if (config.count("results") && config["results"].count("init_T_lidar_camera")) {
+      std::cout << "use manually estimated initial guess" << std::endl;
+      const std::vector<double> values = config["results"]["init_T_lidar_camera"];
+      init_values.assign(values.begin(), values.end());
+    } else if (config.count("results") && config["results"].count("init_T_lidar_camera_auto")) {
+      std::cout << "use automatically estimated initial guess" << std::endl;
+      const std::vector<double> values = config["results"]["init_T_lidar_camera_auto"];
+      init_values.assign(values.begin(), values.end());
+    }
+
+    if (init_values.empty()) {
       std::cerr << glim::console::bold_red << "error: initial guess of T_lidar_camera must be computed before calibration!!" << glim::console::reset << std::endl;
       abort();
     }
-    const std::vector<double> init_values = config["results"]["init_T_lidar_camera"];
 
     Eigen::Isometry3d init_T_lidar_camera = Eigen::Isometry3d::Identity();
     init_T_lidar_camera.translation() << init_values[0], init_values[1], init_values[2];
@@ -60,6 +70,7 @@ public:
 
     const Eigen::Isometry3d init_T_camera_lidar = init_T_lidar_camera.inverse();
 
+    guik::LightViewer::instance()->use_arcball_camera_control();
     VisualLiDARVisualizer vis(proj, dataset, false);
     vis.set_T_camera_lidar(init_T_camera_lidar);
 
@@ -68,6 +79,10 @@ public:
     viewer->use_arcball_camera_control();
 
     VisualCameraCalibrationParams params;
+    params.disable_z_buffer_culling = vm.count("disable_culling");
+    params.nelder_mead_init_step = vm["nelder_mead_init_step"].as<double>();
+    params.nelder_mead_convergence_criteria = vm["nelder_mead_convergence_criteria"].as<double>();
+
     params.callback = [&](const Eigen::Isometry3d& T_camera_lidar) { vis.set_T_camera_lidar(T_camera_lidar); };
     VisualCameraCalibration calib(proj, dataset, params);
 
@@ -104,7 +119,11 @@ public:
     sst << "saved to " << data_path + "/calib.json";
 
     viewer->append_text(sst.str());
-    viewer->spin();
+    viewer->spin_once();
+
+    if (!vm.count("auto_quit")) {
+      viewer->spin();
+    }
   }
 
 private:
@@ -125,6 +144,10 @@ int main(int argc, char** argv) {
   description.add_options()
     ("help", "produce help message")
     ("data_path", value<std::string>(), "directory that contains preprocessed data")
+    ("disable_culling", "disable depth buffer-based hidden points removal")
+    ("nelder_mead_init_step", value<double>()->default_value(1e-3), "Nelder-mead initial step size")
+    ("nelder_mead_convergence_criteria", value<double>()->default_value(1e-8), "Nelder-mead convergence criteria")
+    ("auto_quit", "automatically quit after calibration")
   ;
   // clang-format on
 
@@ -143,7 +166,7 @@ int main(int argc, char** argv) {
   const std::string data_path = vm["data_path"].as<std::string>();
 
   vlcal::VisualLiDARCalibration calib(data_path);
-  calib.calibrate();
+  calib.calibrate(vm);
 
   return 0;
 }

@@ -2,8 +2,10 @@
 # WARNING: SuperGlue is allowed to be used for non-commercial research purposes!!
 #        : You must carefully check and follow its licensing condition!!
 #        : https://github.com/magicleap/SuperGluePretrainedNetwork/blob/master/LICENSE
+from email.mime import image
 import sys
 import cv2
+import math
 import json
 import torch
 import numpy
@@ -27,6 +29,8 @@ def main():
   parser.add_argument('--match_threshold', type=float, default=0.01, help='SuperGlue match threshold')
   parser.add_argument('--show_keypoints', action='store_true', help='Show the detected keypoints')
   parser.add_argument('--force_cpu', action='store_true', help='Force pytorch to run in CPU mode.')
+  parser.add_argument('--rotate_camera', type=int, default=0, help='Rotate camera image before matching (CW 0, 90, 180, or 270) (CW)')
+  parser.add_argument('--rotate_lidar', type=int, default=0, help='Rotate LiDAR image before matching (0, 90, 180, or 270) (CW)')
 
   opt = parser.parse_args()
   print(opt)
@@ -48,6 +52,25 @@ def main():
     }
   }
 
+  def angle_to_rot(angle, image_shape):
+    width, height = image_shape[:2]
+
+    if angle == 90:
+      code = cv2.ROTATE_90_CLOCKWISE
+      func = lambda x: numpy.stack([x[:, 1], width - x[:, 0]], axis=1)
+    elif angle == 180:
+      code = cv2.ROTATE_180
+      func = lambda x: numpy.stack([height - x[:, 0], width - x[:, 1]], axis=1)
+    elif angle == 270:
+      code = cv2.ROTATE_90_COUNTERCLOCKWISE
+      func = lambda x: numpy.stack([height - x[:, 1], x[:, 0]], axis=1)
+    else:
+      print('error: unsupported rotation angle %d' % angle)
+      exit(1)
+
+    return code, func
+
+
   data_path = opt.data_path
   with open(data_path + '/calib.json', 'r') as f:
     calib_config = json.load(f)
@@ -60,6 +83,13 @@ def main():
 
     camera_image = cv2.imread('%s/%s.png' % (data_path, bag_name), 0)
     lidar_image = cv2.imread('%s/%s_lidar_intensities.png' % (data_path, bag_name), 0)
+
+    if opt.rotate_camera:
+      code, camera_R_inv = angle_to_rot(opt.rotate_camera, camera_image.shape)
+      camera_image = cv2.rotate(camera_image, code)
+    if opt.rotate_lidar:
+      code, lidar_R_inv = angle_to_rot(opt.rotate_lidar, lidar_image.shape)
+      lidar_image = cv2.rotate(lidar_image, code)
 
     camera_image_tensor = frame2tensor(camera_image, device)
     lidar_image_tensor = frame2tensor(lidar_image, device)
@@ -74,7 +104,15 @@ def main():
     matches = pred['matches0'][0].cpu().numpy()
     confidence = pred['matching_scores0'][0].cpu().numpy()
 
-    result = { 'kpts0': kpts0.flatten().tolist(), 'kpts1': kpts1.flatten().tolist(), 'matches': matches.flatten().tolist(), 'confidence': confidence.flatten().tolist() }
+    kpts0_ = kpts0
+    kpts1_ = kpts1
+
+    if opt.rotate_camera:
+      kpts0_ = camera_R_inv(kpts0_)
+    if opt.rotate_lidar:
+      kpts1_ = lidar_R_inv(kpts1_)
+
+    result = { 'kpts0': kpts0_.flatten().tolist(), 'kpts1': kpts1_.flatten().tolist(), 'matches': matches.flatten().tolist(), 'confidence': confidence.flatten().tolist() }
     with open('%s/%s_matches.json' % (data_path, bag_name), 'w') as f:
       json.dump(result, f)
 

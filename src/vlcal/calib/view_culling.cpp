@@ -1,6 +1,7 @@
 #include <vlcal/calib/view_culling.hpp>
 
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <vlcal/common/estimate_fov.hpp>
 
 // extern "C" {
@@ -37,15 +38,16 @@ gtsam_ext::FrameCPU::Ptr ViewCulling::cull(const gtsam_ext::Frame::ConstPtr& poi
 
 std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices, const std::vector<Eigen::Vector4d>& points_camera) const {
   std::vector<int> indices;
+  std::vector<Eigen::Vector2i> projected_points;
   indices.reserve(points_camera.size());
+  projected_points.reserve(points_camera.size());
 
-  cv::Mat dist_map(image_size.y(), image_size.x(), CV_64FC1, cv::Scalar::all(std::numeric_limits<double>::max()));
+  cv::Mat dist_map(image_size.y(), image_size.x(), CV_32FC1, cv::Scalar::all(std::numeric_limits<double>::max()));
   cv::Mat index_map(image_size.y(), image_size.x(), CV_32SC1, cv::Scalar::all(-1));
 
   for (int i = 0; i < points_camera.size(); i++) {
     const auto& pt_camera = points_camera[i];
-    const Eigen::Vector3d normalized_pt_camera = pt_camera.normalized().head<3>();
-    if (normalized_pt_camera.z() < min_z) {
+    if (pt_camera.normalized().head<3>().z() < min_z) {
       continue;
     }
 
@@ -55,20 +57,42 @@ std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices
     }
 
     indices.emplace_back(point_indices[i]);
+    projected_points.emplace_back(pt_2d);
 
     if (params.enable_depth_buffer_culling) {
-      const double sq_dist = normalized_pt_camera.squaredNorm();
-      if(sq_dist > dist_map.at<double>(pt_2d.y(), pt_2d.x())) {
+      const double dist = pt_camera.head<3>().norm();
+      if (dist > dist_map.at<float>(pt_2d.y(), pt_2d.x())) {
         continue;
       }
 
-      dist_map.at<double>(pt_2d.y(), pt_2d.x()) = sq_dist;
+      dist_map.at<float>(pt_2d.y(), pt_2d.x()) = dist;
       index_map.at<int>(pt_2d.y(), pt_2d.x()) = point_indices[i];
     }
   }
 
+  if (params.enable_depth_buffer_culling) {
+    std::vector<int> new_indices;
+    new_indices.reserve(indices.size());
 
-  if(params.enable_depth_buffer_culling) {
+    for(int i=0; i<indices.size(); i++) {
+      const auto index = indices[i];
+      const auto& pt_2d = projected_points[i];
+
+      const auto& pt_camera = points_camera[index];
+      const double dist = pt_camera.head<3>().norm();
+
+      if (dist > dist_map.at<float>(pt_2d.y(), pt_2d.x()) + 0.1) {
+        continue;
+      }
+
+      new_indices.emplace_back(index);
+    }
+
+    indices = std::move(new_indices);
+  }
+
+  /*
+  if (params.enable_depth_buffer_culling) {
     indices.clear();
     for (int i = 0; i < index_map.rows * index_map.cols; i++) {
       const int index = index_map.at<int>(i);
@@ -77,6 +101,7 @@ std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices
       }
     }
   }
+  */
 
   return indices;
 }

@@ -46,6 +46,7 @@ Eigen::Isometry3d VisualCameraCalibration::calibrate(const Eigen::Isometry3d& in
 
 Eigen::Isometry3d VisualCameraCalibration::estimate_pose(const Eigen::Isometry3d& init_T_camera_lidar) {
   ViewCullingParams view_culling_params;
+  view_culling_params.enable_depth_buffer_culling = !params.disable_z_buffer_culling;
   ViewCulling view_culling(proj, {dataset.front()->image.cols, dataset.front()->image.rows}, view_culling_params);
 
   std::vector<CostCalculator::Ptr> costs;
@@ -53,6 +54,18 @@ Eigen::Isometry3d VisualCameraCalibration::estimate_pose(const Eigen::Isometry3d
     auto culled_points = view_culling.cull(data->points, init_T_camera_lidar);
     auto new_data = std::make_shared<VisualLiDARData>(data->image, culled_points);
     costs.emplace_back(std::make_shared<CostCalculatorNID>(proj, new_data));
+
+    auto viewer = guik::LightViewer::instance();
+    viewer->invoke([=] {
+      auto culled_cloud_buffer = std::make_shared<glk::PointCloudBuffer>(culled_points->points, culled_points->size());
+      culled_cloud_buffer->add_intensity(glk::COLORMAP::TURBO, culled_points->intensities, culled_points->size());
+      auto raw_cloud_buffer = std::make_shared<glk::PointCloudBuffer>(data->points->points, data->points->size());
+      auto sub = viewer->sub_viewer("view_culling");
+      sub->set_draw_xy_grid(false);
+      sub->set_camera_control(viewer->get_camera_control());
+      sub->update_drawable("raw", raw_cloud_buffer, guik::FlatColor(0.2f, 0.2f, 0.2f, 1.0f));
+      sub->update_drawable("culled", culled_cloud_buffer, guik::VertexColor().add("point_scale", 1.5f));
+    });
   }
 
   double best_cost = std::numeric_limits<double>::max();
@@ -76,6 +89,8 @@ Eigen::Isometry3d VisualCameraCalibration::estimate_pose(const Eigen::Isometry3d
   };
 
   dfo::NelderMead<6>::Params nelder_mead_params;
+  nelder_mead_params.init_step = params.nelder_mead_init_step;
+  nelder_mead_params.convergence_var_thresh = params.nelder_mead_convergence_criteria;
   nelder_mead_params.max_iterations = params.max_inner_iterations;
   dfo::NelderMead<6> optimizer(nelder_mead_params);
   auto result = optimizer.optimize(f, gtsam::Vector6::Zero());

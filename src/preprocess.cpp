@@ -152,6 +152,10 @@ get_camera_params(const boost::program_options::variables_map& vm, const std::st
     std::cerr << glim::console::bold_yellow << "warning: failed to instantiate image msg on " << image_topic << glim::console::reset << std::endl;
   }
 
+  if (image_size.width == 0 && image_size.height == 0) {
+    std::cerr << glim::console::bold_yellow << "warning: image size is not set (image_topic=" << image_topic << ")" << glim::console::reset << std::endl;
+  }
+
   std::string camera_model = vm["camera_model"].as<std::string>();
   if (camera_model != "auto") {
     const std::unordered_set<std::string> valid_camera_models = {"plumb_bob", "fisheye", "omnidir", "equirectangular"};
@@ -200,6 +204,8 @@ get_camera_params(const boost::program_options::variables_map& vm, const std::st
 
     std::cerr << glim::console::bold_yellow << "warning: failed to instantiate camera_info msg on " << camera_info_topic << glim::console::reset << std::endl;
   }
+
+  std::cerr << glim::console::bold_yellow << "warning: failed to get camera_info (camera_info_topic=" << camera_info_topic << ")" << glim::console::reset << std::endl;
 
   return {"none", image_size, {0}, {0}};
 }
@@ -429,7 +435,7 @@ int main(int argc, char** argv) {
   Eigen::Isometry3d T_lidar_camera = Eigen::Isometry3d::Identity();
 
   if (lidar_fov < 150.0 * M_PI / 180.0) {
-    lidar_image_size = {1920, 1920};
+    lidar_image_size = {1024, 1024};
     T_lidar_camera.linear() = (Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitZ())).toRotationMatrix();
     const double fx = lidar_image_size.x() / (2.0 * std::tan(lidar_fov / 2.0));
     lidar_camera_model = "plumb_bob";

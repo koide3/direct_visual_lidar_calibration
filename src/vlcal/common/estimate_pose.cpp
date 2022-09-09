@@ -50,14 +50,19 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
 
   // LSQ rotation estimation
   // https://web.stanford.edu/class/cs273/refs/umeyama.pdf
-  const auto find_rotation = [&](const int index0, const int index1) {
-    const auto& d_c0 = directions_camera[index0];
-    const auto& d_c1 = directions_camera[index1];
-    const auto& d_l0 = directions_lidar[index0];
-    const auto& d_l1 = directions_lidar[index1];
+  const auto find_rotation = [&](const std::vector<int>& indices) {
+    Eigen::Matrix<double, 3, -1> A(3, indices.size());
+    Eigen::Matrix<double, 3, -1> B(3, indices.size());
 
-    const Eigen::Matrix<double, 3, 2> A = (Eigen::Matrix<double, 3, 2>() << d_c0.head<3>(), d_c1.head<3>()).finished();
-    const Eigen::Matrix<double, 3, 2> B = (Eigen::Matrix<double, 3, 2>() << d_l0.head<3>(), d_l1.head<3>()).finished();
+    for (int i = 0; i < indices.size(); i++) {
+      const int index = indices[i];
+      const auto& d_c = directions_camera[index];
+      const auto& d_l = directions_lidar[index];
+
+      A.col(i) = d_c.head<3>();
+      B.col(i) = d_l.head<3>();
+    }
+
     const Eigen::Matrix3d AB = A * B.transpose();
 
     Eigen::JacobiSVD<Eigen::Matrix3d> svd(AB, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -86,25 +91,26 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
     mts[i] = std::mt19937(mt() + 8192 * i);
   }
 
+  const int num_samples = 2;
+
   std::cout << "estimating rotation using RANSAC" << std::endl;
 #pragma omp parallel for
   for (int i = 0; i < params.ransac_iterations; i++) {
     const int thread_id = omp_get_thread_num();
+    std::vector<int> indices(num_samples);
     std::uniform_int_distribution<> udist(0, correspondences.size() - 1);
-    const int index0 = udist(mts[thread_id]);
-    const int index1 = udist(mts[thread_id]);
-
-    if (index0 == index1) {
-      continue;
+    for (int i = 0; i < num_samples; i++) {
+      indices[i] = udist(mts[thread_id]);
     }
 
     Eigen::Matrix4d R_camera_lidar = Eigen::Matrix4d::Zero();
-    R_camera_lidar.topLeftCorner<3, 3>() = find_rotation(index0, index1);
+    R_camera_lidar.topLeftCorner<3, 3>() = find_rotation(indices);
 
     int num_inliers = 0;
     for (int j = 0; j < correspondences.size(); j++) {
       const Eigen::Vector4d direction_cam = R_camera_lidar * directions_lidar[j];
       const Eigen::Vector2d pt_2d = proj->project(direction_cam.head<3>());
+
       if ((correspondences[j].first - pt_2d).squaredNorm() < error_thresh_sq) {
         num_inliers++;
       }
@@ -153,7 +159,7 @@ Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
 
   ceres::Solver::Options options;
   options.linear_solver_type = ceres::DENSE_QR;
-  options.minimizer_progress_to_stdout = true;
+  // options.minimizer_progress_to_stdout = true;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
 

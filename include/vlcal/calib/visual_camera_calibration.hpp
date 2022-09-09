@@ -13,6 +13,11 @@ public:
 
     delta_trans_thresh = 0.1;
     delta_rot_thresh = 0.5 * M_PI / 180.0;
+
+    disable_z_buffer_culling = false;
+
+    nelder_mead_init_step = 1e-3;
+    nelder_mead_convergence_criteria = 1e-8;
   }
 
   int max_outer_iterations;
@@ -20,6 +25,11 @@ public:
 
   double delta_trans_thresh;
   double delta_rot_thresh;
+
+  bool disable_z_buffer_culling;
+
+  double nelder_mead_init_step;
+  double nelder_mead_convergence_criteria;
 
   std::function<void(const Eigen::Isometry3d& T_camera_lidar)> callback;
 };

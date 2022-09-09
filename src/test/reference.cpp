@@ -228,9 +228,7 @@ void mouse_callback(int event, int x, int y, int flags, void* userdata) {
 }  // namespace vlcal
 
 int main(int argc, char** argv) {
-  const std::string data_path = "/home/koide/datasets/lidar_camera/ouster_ref_pixpro";
-
-  vlcal::ReferenceCalibration calib(data_path);
+  vlcal::ReferenceCalibration calib(argv[1]);
   calib.spin();
 
   return 0;

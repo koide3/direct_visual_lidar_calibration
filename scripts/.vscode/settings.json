@@ -2,6 +2,8 @@
   "python.autoComplete.extraPaths": [
     "/home/koide/catkin_ws/devel/lib/python3/dist-packages",
     "/opt/ros/noetic/lib/python3/dist-packages",
-    "/home/koide/libs/SuperGluePretrainedNetwork"
+    "/home/koide/libs/fancy_tools/python",
+    "/home/koide/libs/fancy_tools/python",
+    "/home/koide/libs/fancy_tools/python"
   ]
 }

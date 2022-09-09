@@ -17,6 +17,10 @@
 #include <vlcal/common/estimate_pose.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 
+#include <glk/primitives/primitives.hpp>
+#include <glk/pointcloud_buffer.hpp>
+#include <guik/viewer/light_viewer.hpp>
+
 namespace vlcal {
 
 class InitialGuessAuto {
@@ -122,7 +126,7 @@ public:
     const Eigen::Quaterniond quat = Eigen::Quaterniond(T_lidar_camera.linear()).normalized();
     const std::vector<double> values = {trans.x(), trans.y(), trans.z(), quat.x(), quat.y(), quat.z(), quat.w()};
 
-    config["results"]["init_T_lidar_camera"] = values;
+    config["results"]["init_T_lidar_camera_auto"] = values;
 
     std::ofstream ofs(data_path + "/calib.json");
     if(!ofs) {
