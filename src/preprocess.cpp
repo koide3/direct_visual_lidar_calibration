@@ -440,6 +440,7 @@ int main(int argc, char** argv) {
 
   // Generate LiDAR images
   const double lidar_fov = vlcal::estimate_lidar_fov(lidar_points.front());
+  std::cout << "LiDAR FoV: " << lidar_fov * 180.0 / M_PI << "[deg]" << std::endl;
   Eigen::Vector2i lidar_image_size;
   std::string lidar_camera_model;
   std::vector<double> lidar_camera_intrinsics;

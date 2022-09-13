@@ -117,6 +117,18 @@ target_link_libraries(calibrate
   ${catkin_LIBRARIES}
 )
 
+# viewer
+add_executable(viewer
+  src/viewer.cpp
+)
+target_include_directories(viewer PRIVATE
+  ${catkin_INCLUDE_DIRS}
+)
+target_link_libraries(viewer
+  direct_visual_lidar_calibration
+  ${catkin_LIBRARIES}
+)
+
 
 
 ################ test code ################
@@ -132,13 +144,13 @@ target_link_libraries(reference
   ${catkin_LIBRARIES}
 )
 
-add_executable(normalization
-  src/test/normalization.cpp
+add_executable(vis
+  src/test/vis.cpp
 )
-target_include_directories(normalization PRIVATE
+target_include_directories(vis PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(normalization
+target_link_libraries(vis
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )

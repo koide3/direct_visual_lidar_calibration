@@ -26,7 +26,7 @@ namespace vlcal {
 
 class VisualLiDARCalibration {
 public:
-  VisualLiDARCalibration(const std::string& data_path) : data_path(data_path) {
+  VisualLiDARCalibration(const std::string& data_path, const boost::program_options::variables_map& vm) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
       std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
@@ -40,11 +40,16 @@ public:
     const std::vector<double> distortion_coeffs = config["camera"]["distortion_coeffs"];
     proj = camera::create_camera(camera_model, intrinsics, distortion_coeffs);
 
-    const std::vector<std::string> bag_names = config["meta"]["bag_names"];
+    std::vector<std::string> bag_names = config["meta"]["bag_names"];
     for (const auto& bag_name : bag_names) {
       dataset.emplace_back(std::make_shared<VisualLiDARData>(data_path, bag_name));
     }
 
+    if (vm.count("first_n_bags")) {
+      const int first_n_bags = vm["first_n_bags"].as<int>();
+      dataset.erase(dataset.begin() + first_n_bags, dataset.end());
+      std::cout << "use only the first " << first_n_bags << " bags" << std::endl;
+    }
   }
 
   void calibrate(const boost::program_options::variables_map& vm) {
@@ -144,6 +149,7 @@ int main(int argc, char** argv) {
   description.add_options()
     ("help", "produce help message")
     ("data_path", value<std::string>(), "directory that contains preprocessed data")
+    ("first_n_bags", value<int>(), "use only the first N bags (just for evaluation)")
     ("disable_culling", "disable depth buffer-based hidden points removal")
     ("nid_bins", value<int>()->default_value(10), "Number of histogram bins for NID")
     ("nelder_mead_init_step", value<double>()->default_value(1e-3), "Nelder-mead initial step size")
@@ -167,7 +173,7 @@ int main(int argc, char** argv) {
 
   const std::string data_path = vm["data_path"].as<std::string>();
 
-  vlcal::VisualLiDARCalibration calib(data_path);
+  vlcal::VisualLiDARCalibration calib(data_path, vm);
   calib.calibrate(vm);
 
   return 0;
