@@ -129,9 +129,9 @@ def main():
 
     canvas = numpy.concatenate([camera_canvas, lidar_canvas], axis=1)
     for kp in kpts0:
-      cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
+      cv2.circle(canvas, (int(kp[0]), int(kp[1])), 3, (255, 255, 255))
     for kp in kpts1:
-      cv2.circle(canvas, (kp[0], kp[1]), 3, (255, 255, 255))
+      cv2.circle(canvas, (int(kp[0]), int(kp[1])), 3, (255, 255, 255))
 
     cmap = matplotlib.cm.get_cmap('turbo')
     confidence = confidence / numpy.max(confidence)
@@ -139,13 +139,12 @@ def main():
     for i, match in enumerate(matches):
       if match < 0:
         continue
-      
       kp0 = kpts0[i]
       kp1 = kpts1[match]
 
       color = tuple((numpy.array(cmap(confidence[i])) * 255).astype(numpy.int).tolist())
 
-      cv2.line(canvas, (kp0[0], kp0[1]), (kp1[0], kp1[1]), color)
+      cv2.line(canvas, (int(kp0[0]), int(kp0[1])), (int(kp1[0]), int(kp1[1])), color)
 
     cv2.imwrite('%s/%s_superglue.png' % (data_path, bag_name), canvas)
 
