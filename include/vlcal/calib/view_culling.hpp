@@ -9,15 +9,9 @@ struct ViewCullingParams {
 public:
   ViewCullingParams() {
     enable_depth_buffer_culling = true;
-
-    remove_hidden_points = false;
-    hidden_points_removal_max_z = 200.0;
   }
 
-  bool enable_depth_buffer_culling;
-
-  bool remove_hidden_points;
-  double hidden_points_removal_max_z;
+  bool enable_depth_buffer_culling;       ///< If ture, perform depth-buffer-based hidden points removal
 };
 
 class ViewCulling {
@@ -25,6 +19,9 @@ public:
   ViewCulling(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector2i& image_size, const ViewCullingParams& params);
   ~ViewCulling();
 
+  /**
+   * @brief Remove points that should not be visible from the viewpoint of the camera
+   */
   gtsam_ext::FrameCPU::Ptr cull(const gtsam_ext::Frame::ConstPtr& points, const Eigen::Isometry3d& T_camera_lidar) const;
 
 private:

@@ -5,6 +5,10 @@
 
 namespace camera {
 
+/**
+ * @brief Equirectangular omnidirectional projection.
+ *        "From google street view to 3d city models", ICCVW, 2009
+ */
 struct EquirectangularProjection {
   template <typename T, typename T2>
   auto operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {

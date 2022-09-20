@@ -20,7 +20,7 @@ double get_real(const double& x) {
 
 class NIDCost {
 public:
-  NIDCost(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& normalized_image, const gtsam_ext::Frame::ConstPtr& points, const int bins = 10)
+  NIDCost(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& normalized_image, const gtsam_ext::Frame::ConstPtr& points, const int bins = 16)
   : proj(proj),
     normalized_image(normalized_image.clone()),
     points(points),
@@ -31,26 +31,6 @@ public:
     spline_coeffs.row(2) << 1.0, 3.0, 3.0, -3.0;
     spline_coeffs.row(3) << 0.0, 0.0, 0.0, 1.0;
     spline_coeffs /= 6.0;
-
-    Eigen::VectorXd hist_image = Eigen::VectorXd::Zero(bins);
-    Eigen::VectorXd hist_points = Eigen::VectorXd::Zero(bins);
-
-    for (int i = 0; i < normalized_image.rows; i++) {
-      for (int j = 0; j < normalized_image.cols; j++) {
-        const double pix = normalized_image.at<double>(i, j);
-        const int bin = std::min<int>(pix * bins, bins - 1);
-        hist_image[bin]++;
-      }
-    }
-
-    for (int i = 0; i < points->size(); i++) {
-      const double intensity = points->intensities[i];
-      const int bin = std::min<int>(intensity * bins, bins - 1);
-      hist_points[bin]++;
-    }
-
-    H_image = (-hist_image.array() * (hist_image.array() + 1e-6).log()).sum();
-    H_points = (-hist_points.array() * (hist_points.array() + 1e-6).log()).sum();
   }
 
   template <typename T>
@@ -58,6 +38,9 @@ public:
     const Eigen::Map<Sophus::SE3<T> const> T_camera_lidar(T_camera_lidar_params);
 
     Eigen::Matrix<T, -1, -1> hist = Eigen::Matrix<T, -1, -1>::Zero(bins, bins);
+
+    Eigen::Matrix<T, -1, 1> hist_image = Eigen::Matrix<T, -1, 1>::Zero(bins);
+    Eigen::VectorXd hist_points = Eigen::VectorXd::Zero(bins);
 
     int num_outliers = 0;
     for (int i = 0; i < points->size(); i++) {
@@ -73,6 +56,8 @@ public:
         num_outliers++;
         continue;
       }
+
+      hist_points[bin_points]++;
 
       Eigen::Matrix<T, 4, 2> se;
       se.row(0).setOnes();
@@ -93,10 +78,19 @@ public:
           const double pix = normalized_image.at<double>(knots_y[j], knots_x[i]);
           const int bin_image = std::min<int>(pix * bins, bins - 1);
           hist(bin_image, bin_points) += w;
+          hist_image[bin_image] += w;
         }
       }
     }
 
+    const double sum = hist_points.sum();
+
+    hist_image = hist_image / sum;
+    hist_points = hist_points / sum;
+    hist = hist / sum;
+
+    const T H_image = -(hist_image.array() * (hist_image.array() + 1e-6).log()).sum();
+    const double H_points = -(hist_points.array() * (hist_points.array() + 1e-6).log()).sum();
     const T H_image_points = -(hist.array() * (hist.array() + 1e-6).log()).sum();
     const T MI = H_image + H_points - H_image_points;
     const T NID = (H_image_points - MI) / H_image_points;
@@ -119,8 +113,5 @@ private:
 
   const int bins;
   Eigen::Matrix<double, 4, 4> spline_coeffs;
-
-  double H_image;
-  double H_points;
 };
 }

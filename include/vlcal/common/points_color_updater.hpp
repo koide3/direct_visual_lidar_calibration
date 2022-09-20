@@ -7,6 +7,9 @@
 
 namespace vlcal {
 
+/**
+ * @brief A class to colorize LiDAR points with a camera image
+ */
 class PointsColorUpdater {
 public:
   PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image);

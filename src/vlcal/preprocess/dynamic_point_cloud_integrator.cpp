@@ -52,6 +52,7 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
 
   std::vector<int> neighbors(points->size() * params.k_neighbors);
 
+  // Find kNN
   gtsam_ext::KdTree2<gtsam_ext::Frame> tree(points);
 #pragma omp parallel for num_threads(params.num_threads)
   for (int i = 0; i < points->size(); i++) {
@@ -61,10 +62,12 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
     std::copy(k_indices.begin(), k_indices.end(), neighbors.begin() + params.k_neighbors * i);
   }
 
+  // Estimate covariances
   glim::CloudCovarianceEstimation covariance_estimation(params.num_threads);
   points->add_covs(covariance_estimation.estimate(points->points_storage, neighbors));
 
   if (!target_ivox->has_points()) {
+    // Handling the first frame
     target_ivox->insert(*points);
     alignment_results.push(std::make_tuple(raw_points, gtsam::Pose3(), gtsam::Pose3()));
     return;
@@ -89,7 +92,6 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
 
   gtsam_ext::LevenbergMarquardtExtParams lm_params;
   lm_params.setMaxIterations(15);
-  // lm_params.set_verbose();
 
   values = gtsam_ext::LevenbergMarquardtOptimizerExt(graph, values, lm_params).optimize();
 
@@ -127,10 +129,11 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
     double last_t = -1.0;
     gtsam::Pose3 T_odom_lidar = T_odom_lidar_begin;
 
+    const double time_eps = 1e-4;
     for (int i = 0; i < raw_points->size(); i++) {
       const double t = raw_points->times[i] / max_timestamp;
 
-      if (t - last_t > 1e-4) {
+      if (t - last_t > time_eps) {
         last_t = t;
         T_odom_lidar = T_odom_lidar_begin.interpolateRt(T_odom_lidar_end, t);
       }

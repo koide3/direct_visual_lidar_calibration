@@ -5,8 +5,10 @@
 
 namespace camera {
 
-// Unified omnidirectional camera model
-// https://github.com/opencv/opencv_contrib/blob/master/modules/ccalib/src/omnidir.cpp
+/**
+ * @brief Unified omnidirectional projection model + plumb_bob distortion
+ * https://github.com/opencv/opencv_contrib/blob/master/modules/ccalib/src/omnidir.cpp
+ */
 struct OmnidirectionalProjection {
   template <typename T, typename T2>
   auto operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {

@@ -14,6 +14,9 @@
 
 namespace vlcal {
 
+/**
+ * @brief Static LiDAR point integrator for non-repetitive scan LiDARs
+ */
 struct StaticPointCloudIntegratorParams {
 public:
   StaticPointCloudIntegratorParams();

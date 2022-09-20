@@ -9,8 +9,19 @@
 
 namespace vlcal {
 
+/**
+ * @brief A class to visualize LiDAR-camera dataset while painting LiDAR points with camera images
+ * @note  What a poor class name!
+ */
 class VisualLiDARVisualizer {
 public:
+  /**
+   * @brief Constructor
+   * @param proj          Camera model
+   * @param dataset       LiDAR-camera data pairings
+   * @param draw_sphere   If true, draw unit sphere as a projection screen in addition to LiDAR points
+   * @param show_image_cv If ture, do cv::imshow in addition to LiDAR points rendering
+   */
   VisualLiDARVisualizer(const camera::GenericCameraBase::ConstPtr& proj, const std::vector<VisualLiDARData::ConstPtr>& dataset, const bool draw_sphere, const bool show_image_cv = false);
   ~VisualLiDARVisualizer();
 

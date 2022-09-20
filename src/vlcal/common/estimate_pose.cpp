@@ -21,12 +21,14 @@ Eigen::Isometry3d PoseEstimation::estimate(
   const camera::GenericCameraBase::ConstPtr& proj,
   const std::vector<std::pair<Eigen::Vector2d, Eigen::Vector4d>>& correspondences,
   std::vector<bool>* inliers) {
+  // RANSAC
   Eigen::Isometry3d T_camera_lidar = Eigen::Isometry3d::Identity();
   T_camera_lidar.linear() = estimate_rotation_ransac(proj, correspondences, inliers);
 
   std::cout << "--- T_camera_lidar (RANSAC) ---" << std::endl;
   std::cout << T_camera_lidar.matrix() << std::endl;
 
+  // Reprojection error minimization
   T_camera_lidar = estimate_pose_lsq(proj, correspondences, T_camera_lidar);
 
   std::cout << "--- T_camera_lidar (LSQ) ---" << std::endl;
@@ -97,15 +99,19 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
 #pragma omp parallel for
   for (int i = 0; i < params.ransac_iterations; i++) {
     const int thread_id = omp_get_thread_num();
+
+    // Sample correspondences
     std::vector<int> indices(num_samples);
     std::uniform_int_distribution<> udist(0, correspondences.size() - 1);
     for (int i = 0; i < num_samples; i++) {
       indices[i] = udist(mts[thread_id]);
     }
 
+    // Estimate rotation
     Eigen::Matrix4d R_camera_lidar = Eigen::Matrix4d::Zero();
     R_camera_lidar.topLeftCorner<3, 3>() = find_rotation(indices);
 
+    // Count num of inliers
     int num_inliers = 0;
     for (int j = 0; j < correspondences.size(); j++) {
       const Eigen::Vector4d direction_cam = R_camera_lidar * directions_lidar[j];
@@ -118,6 +124,7 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
 
 #pragma omp critical
     if (num_inliers > best_num_inliers) {
+      // Update the best rotation
       best_num_inliers = num_inliers;
       best_R_camera_lidar = R_camera_lidar;
     }
@@ -150,6 +157,7 @@ Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
   // The default ceres (2.0.0) on Ubuntu 20.04 does not have manifold.hpp yet
   // problem.AddParameterBlock(T_camera_lidar.data(), Sophus::SE3d::num_parameters, new Sophus::Manifold<Sophus::SE3>());
 
+  // Create reprojection error costs
   for (const auto& [pt_2d, pt_3d] : correspondences) {
     auto reproj_error = new ReprojectionCost(proj, pt_3d.head<3>(), pt_2d);
     auto ad_cost = new ceres::AutoDiffCostFunction<ReprojectionCost, 2, Sophus::SE3d::num_parameters>(reproj_error);
@@ -157,9 +165,9 @@ Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
     problem.AddResidualBlock(ad_cost, loss, T_camera_lidar.data());
   }
 
+  // Solve!
   ceres::Solver::Options options;
   options.linear_solver_type = ceres::DENSE_QR;
-  // options.minimizer_progress_to_stdout = true;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
 

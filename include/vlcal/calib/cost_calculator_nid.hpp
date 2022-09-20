@@ -10,8 +10,7 @@ struct NIDCostParams {
   NIDCostParams();
   ~NIDCostParams();
 
-  int bins;
-  int num_threads;
+  int bins;         ///< Number of histogram bins for NID computation
 };
 
 class CostCalculatorNID : public CostCalculator{

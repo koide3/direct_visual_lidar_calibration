@@ -44,10 +44,6 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/preprocess/static_point_cloud_integrator.cpp
   src/vlcal/preprocess/dynamic_point_cloud_integrator.cpp
   src/vlcal/calib/cost_calculator_nid.cpp
-  src/vlcal/calib/cost_calculator_edge.cpp
-  src/vlcal/calib/edge_extraction.cpp
-  src/vlcal/calib/nearest_neighbor_search.cpp
-  src/vlcal/calib/line_fitting.cpp
   src/vlcal/calib/view_culling.cpp
   src/vlcal/calib/visual_camera_calibration.cpp
 )
@@ -125,32 +121,6 @@ target_include_directories(viewer PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
 target_link_libraries(viewer
-  direct_visual_lidar_calibration
-  ${catkin_LIBRARIES}
-)
-
-
-
-################ test code ################
-add_executable(reference
-  src/test/reference.cpp
-  src/test/detect_sphere.cpp
-)
-target_include_directories(reference PRIVATE
-  ${catkin_INCLUDE_DIRS}
-)
-target_link_libraries(reference
-  direct_visual_lidar_calibration
-  ${catkin_LIBRARIES}
-)
-
-add_executable(vis
-  src/test/vis.cpp
-)
-target_include_directories(vis PRIVATE
-  ${catkin_INCLUDE_DIRS}
-)
-target_link_libraries(vis
   direct_visual_lidar_calibration
   ${catkin_LIBRARIES}
 )

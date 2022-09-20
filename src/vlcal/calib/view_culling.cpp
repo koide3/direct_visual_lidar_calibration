@@ -28,11 +28,6 @@ gtsam_ext::FrameCPU::Ptr ViewCulling::cull(const gtsam_ext::Frame::ConstPtr& poi
   }
 
   point_indices = view_culling(point_indices, points_camera);
-  for(int i=0; i<point_indices.size(); i++) {
-    points_camera[i] = points_camera[point_indices[i]];
-  }
-  points_camera.resize(point_indices.size());
-
   return gtsam_ext::sample(points, point_indices);
 }
 
@@ -48,11 +43,13 @@ std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices
   for (int i = 0; i < points_camera.size(); i++) {
     const auto& pt_camera = points_camera[i];
     if (pt_camera.normalized().head<3>().z() < min_z) {
+      // Out of FoV
       continue;
     }
 
     const Eigen::Vector2i pt_2d = proj->project(pt_camera.head<3>()).cast<int>();
     if ((pt_2d.array() < Eigen::Array2i::Zero()).any() || (pt_2d.array() >= image_size.array()).any()) {
+      // Out of image
       continue;
     }
 
@@ -91,22 +88,11 @@ std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices
     indices = std::move(new_indices);
   }
 
-  /*
-  if (params.enable_depth_buffer_culling) {
-    indices.clear();
-    for (int i = 0; i < index_map.rows * index_map.cols; i++) {
-      const int index = index_map.at<int>(i);
-      if (index >= 0) {
-        indices.emplace_back(index);
-      }
-    }
-  }
-  */
-
   return indices;
 }
 
 /*
+// Not as good as expected
 std::vector<int> ViewCulling::hidden_points_removal(const std::vector<int>& point_indices, const std::vector<Eigen::Vector4d>& points_camera) const {
   // hidden points removal
   // [Katz 2007]

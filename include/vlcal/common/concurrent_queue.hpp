@@ -8,6 +8,9 @@
 
 namespace vlcal {
 
+/**
+ * @brief Simple thread-safe queue with mutex
+ */
 template <typename T>
 class ConcurrentQueue {
 public:

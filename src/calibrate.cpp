@@ -88,6 +88,15 @@ public:
     params.nelder_mead_init_step = vm["nelder_mead_init_step"].as<double>();
     params.nelder_mead_convergence_criteria = vm["nelder_mead_convergence_criteria"].as<double>();
 
+    const std::string registration_type = vm["registration_type"].as<std::string>();
+    if(registration_type == "nid_bfgs") {
+      params.registration_type = RegistrationType::NID_BFGS;
+    } else if (registration_type == "nid_nelder_mead") {
+      params.registration_type = RegistrationType::NID_NELDER_MEAD;
+    } else {
+      std::cerr << glim::console::bold_yellow << "warning: unknown registration type " << registration_type << glim::console::reset << std::endl;
+    }
+
     params.callback = [&](const Eigen::Isometry3d& T_camera_lidar) { vis.set_T_camera_lidar(T_camera_lidar); };
     VisualCameraCalibration calib(proj, dataset, params);
 
@@ -151,7 +160,8 @@ int main(int argc, char** argv) {
     ("data_path", value<std::string>(), "directory that contains preprocessed data")
     ("first_n_bags", value<int>(), "use only the first N bags (just for evaluation)")
     ("disable_culling", "disable depth buffer-based hidden points removal")
-    ("nid_bins", value<int>()->default_value(10), "Number of histogram bins for NID")
+    ("nid_bins", value<int>()->default_value(16), "Number of histogram bins for NID")
+    ("registration_type", value<std::string>()->default_value("nid_bfgs"), "nid_bfgs or nid_nelder_mead")
     ("nelder_mead_init_step", value<double>()->default_value(1e-3), "Nelder-mead initial step size")
     ("nelder_mead_convergence_criteria", value<double>()->default_value(1e-8), "Nelder-mead convergence criteria")
     ("auto_quit", "automatically quit after calibration")

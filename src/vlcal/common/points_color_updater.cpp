@@ -38,17 +38,17 @@ PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr
 void PointsColorUpdater::update(const Eigen::Isometry3d& T_camera_liar, const double blend_weight) {
   std::shared_ptr<std::vector<Eigen::Vector4f>> colors(new std::vector<Eigen::Vector4f>(points->size(), Eigen::Vector4f::Zero()));
 
-  int num_clipped = 0;
   for (int i = 0; i < points->size(); i++) {
     const Eigen::Vector4d pt_camera = T_camera_liar * points->points[i];
 
     if (pt_camera.head<3>().normalized().z() < min_nz) {
-      num_clipped++;
+      // Out of FoV
       continue;
     }
 
     const Eigen::Vector2i pt_2d = proj->project(pt_camera.head<3>()).cast<int>();
     if ((pt_2d.array() < Eigen::Array2i::Zero()).any() || (pt_2d.array() >= Eigen::Array2i(image.cols, image.rows)).any()) {
+      // Out of Image
       continue;
     }
 

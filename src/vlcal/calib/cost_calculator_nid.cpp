@@ -6,7 +6,6 @@ namespace vlcal {
 
 NIDCostParams::NIDCostParams() {
   bins = 16;
-  num_threads = 1;
 }
 
 NIDCostParams::~NIDCostParams() {}
@@ -31,23 +30,25 @@ double CostCalculatorNID::calculate(const Eigen::Isometry3d& T_camera_lidar) {
   for (int i = 0; i < points->size(); i++) {
     const Eigen::Vector4d pt_camera = T_camera_lidar * points->points[i];
     if (pt_camera.head<3>().normalized().z() < std::cos(max_fov)) {
+      // Out of FoV
       continue;
     }
 
     const Eigen::Array2i pt_2d = proj->project(pt_camera.head<3>()).cast<int>();
     if ((pt_2d < Eigen::Array2i::Zero()).any() || (pt_2d >= image_size).any()) {
+      // Out of Image
       continue;
     }
 
     const double pixel = image.at<std::uint8_t>(pt_2d.y(), pt_2d.x()) / 255.0;
-    const double intensity = points->intensities[i];
+    const double lidar_intensity = points->intensities[i];
 
-    const int image_bin = std::max<int>(0, std::min<int>(params.bins - 1, pixel * (params.bins - 1)));
-    const int intensity_bin = std::max<int>(0, std::min<int>(params.bins - 1, intensity * (params.bins - 1)));
+    const int image_bin = std::max<int>(0, std::min<int>(params.bins - 1, pixel * params.bins));
+    const int lidar_bin = std::max<int>(0, std::min<int>(params.bins - 1, lidar_intensity * params.bins));
 
-    hist(image_bin, intensity_bin)++;
+    hist(image_bin, lidar_bin)++;
     hist_image[image_bin]++;
-    hist_points[intensity_bin]++;
+    hist_points[lidar_bin]++;
   }
 
   const int sum = hist_image.sum();
@@ -55,9 +56,9 @@ double CostCalculatorNID::calculate(const Eigen::Isometry3d& T_camera_lidar) {
   const Eigen::VectorXd hist_r = hist_image.cast<double>() / sum;
   const Eigen::VectorXd hist_s = hist_points.cast<double>() / sum;
 
-  const double Hr = (hist_r.array() * (hist_r.array() + 1e-6).log()).sum();
-  const double Hs = (hist_s.array() * (hist_s.array() + 1e-6).log()).sum();
-  const double Hrs = (hist_rs.array() * (hist_rs.array() + 1e-6).log()).sum();
+  const double Hr = -(hist_r.array() * (hist_r.array() + 1e-6).log()).sum();
+  const double Hs = -(hist_s.array() * (hist_s.array() + 1e-6).log()).sum();
+  const double Hrs = -(hist_rs.array() * (hist_rs.array() + 1e-6).log()).sum();
 
   const double MI = Hr + Hs - Hrs;
   const double NID = (Hrs - MI) / Hrs;

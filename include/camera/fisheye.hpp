@@ -5,8 +5,10 @@
 
 namespace camera {
 
-// pinhole + fisheye distortion (compatible with OpenCV maybe)
-// https://docs.opencv.org/4.5.2/db/d58/group__calib3d__fisheye.html
+/**
+ * @brief Pinhole projection + fisheye distortion (compatible with OpenCV maybe)
+ * https://docs.opencv.org/4.5.2/db/d58/group__calib3d__fisheye.html
+*/
 struct FisheyeProjection {
   template <typename T, typename T2>
   auto operator()(const T* const intrinsic, const T* const distortion, const Eigen::Matrix<T2, 3, 1>& point_3d) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {

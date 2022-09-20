@@ -5,6 +5,9 @@
 
 namespace camera {
 
+/**
+ * @brief Pinhole projection + plumb_bob distortion (compatible with OpenCV maybe)
+ */
 struct PinholeProjection {
   template <typename T, typename T2>
   auto distort(const T* const distortion, const Eigen::Matrix<T2, 2, 1>& pt) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {

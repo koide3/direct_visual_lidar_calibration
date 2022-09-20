@@ -14,6 +14,7 @@
 
 #include <glk/primitives/primitives.hpp>
 #include <glk/pointcloud_buffer.hpp>
+#include <guik/hovered_drawings.hpp>
 #include <guik/model_control.hpp>
 #include <guik/viewer/light_viewer.hpp>
 
@@ -120,7 +121,10 @@ public:
         if (depth > -1.0f && depth < 1.0f) {
           const Eigen::Vector3f pt_3d = viewer->unproject({io.MousePos[0], io.MousePos[1]}, depth);
           picking->pick_point_3d(Eigen::Vector4d(pt_3d.x(), pt_3d.y(), pt_3d.z(), 1.0));
-          viewer->update_drawable("picked", glk::Primitives::sphere(), guik::FlatRed().translate(pt_3d).scale(0.05f));
+
+          guik::HoveredDrawings hovered;
+          hovered.add_cross(pt_3d, IM_COL32(0, 255, 0, 255));
+          viewer->register_ui_callback("hovered", hovered.create_callback());
         }
       }
 
@@ -180,8 +184,8 @@ public:
 
     cv::Mat canvas;
     cv::cvtColor(dataset[vis->get_selected_bag_id()]->image, canvas, cv::COLOR_GRAY2BGR);
-    cv::line(canvas, {x - 5, y - 5}, {x + 5, y + 5}, cv::Scalar(0, 255, 0));
-    cv::line(canvas, {x + 5, y - 5}, {x - 5, y + 5}, cv::Scalar(0, 255, 0));
+    cv::line(canvas, {x - 10, y - 10}, {x + 10, y + 10}, cv::Scalar(0, 255, 0));
+    cv::line(canvas, {x + 10, y - 10}, {x - 10, y + 10}, cv::Scalar(0, 255, 0));
     cv::imshow("image", canvas);
 
     picking->pick_point_2d({x, y});

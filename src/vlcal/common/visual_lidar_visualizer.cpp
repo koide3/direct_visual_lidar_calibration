@@ -1,6 +1,7 @@
 #include <vlcal/common/visual_lidar_visualizer.hpp>
 
 #include <opencv2/highgui.hpp>
+#include <glk/texture_opencv.hpp>
 #include <guik/viewer/light_viewer.hpp>
 
 namespace vlcal {
@@ -61,6 +62,10 @@ void VisualLiDARVisualizer::ui_callback() {
 
     if(show_image_cv) {
       cv::imshow("image", dataset[selected_bag_id]->image);
+    } else {
+      cv::Mat bgr;
+      cv::cvtColor(dataset[selected_bag_id]->image, bgr, cv::COLOR_GRAY2BGR);
+      viewer->update_image("image", glk::create_texture(bgr));
     }
   }
   ImGui::DragFloat("blend_weight", &blend_weight, 0.01f, 0.0f, 1.0f);

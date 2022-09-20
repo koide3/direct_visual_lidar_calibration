@@ -5,6 +5,10 @@
 
 namespace camera {
 
+/**
+ * @brief ATAN projection model.
+ *        "Straight  lines  have  to  be  straight", MVA, 2021
+ */
 struct ATANProjection {
   template <typename T, typename T2>
   auto distort(const T* const distortion, const Eigen::Matrix<T2, 2, 1>& pt) const -> Eigen::Matrix<decltype(T() * T2()), 2, 1> {

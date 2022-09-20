@@ -27,14 +27,17 @@ public:
   DynamicPointCloudIntegratorParams();
   ~DynamicPointCloudIntegratorParams();
 
-  int num_threads;
-  int k_neighbors;
-  int target_num_points;
+  int num_threads;        ///< Number of threads
+  int k_neighbors;        ///< Number of neighbor points for covariance estimation
+  int target_num_points;  ///< Target number of points for downsampling
 
-  double min_distance;
-  double voxel_resolution;
+  double min_distance;        ///< Points closer than this will be discarded
+  double voxel_resolution;    ///< Dense target model downsampling resolution
 };
 
+/**
+ * @brief Dynamic LiDAR point integrator for spinning LiDARs
+ */
 class DynamicPointCloudIntegrator : public PointCloudIntegrator {
 public:
   DynamicPointCloudIntegrator(const DynamicPointCloudIntegratorParams& params = DynamicPointCloudIntegratorParams());
