@@ -1,19 +1,26 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>direct_visual_lidar_calibration</name>
   <version>0.0.0</version>
-  <description>The direct_visual_lidar_calibration package</description>
+  <description>LiDAR-Camera calibration based on NID-based direct image-pointcloud registration</description>
 
   <maintainer email="k.koide@aist.go.jp">k.koide</maintainer>
 
   <license>MIT</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
+  
+  <depend condition="$ROS_VERSION == 1">roscpp</depend>
+  <depend condition="$ROS_VERSION == 1">rosbag</depend>
+  <depend condition="$ROS_VERSION == 2">rclcpp</depend>
+  <depend condition="$ROS_VERSION == 2">rosbag2_cpp</depend>
+
   <depend>glim</depend>
-  <depend>rosbag</depend>
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
 
   <export>
+    <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
   </export>
 </package>

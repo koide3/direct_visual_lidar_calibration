@@ -21,6 +21,7 @@
 namespace vlcal {
 
 DynamicPointCloudIntegratorParams::DynamicPointCloudIntegratorParams() {
+  visualize = false;
   num_threads = 16;
   k_neighbors = 20;
   target_num_points = 10000;
@@ -105,13 +106,13 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
 
   alignment_results.push(std::make_tuple(raw_points, values.at<gtsam::Pose3>(0), values.at<gtsam::Pose3>(1)));
 
-  /*
-  auto viewer = guik::LightViewer::instance();
-  viewer->update_drawable("coord", glk::Primitives::coordinate_system(), guik::VertexColor(last_T_odom_lidar_end.matrix()));
-  viewer->update_drawable("points", std::make_shared<glk::PointCloudBuffer>(deskewed->points, deskewed->size()), guik::FlatOrange());
-  viewer->update_drawable("target", std::make_shared<glk::PointCloudBuffer>(target_ivox->voxel_points()), guik::Rainbow());
-  viewer->toggle_spin_once();
-  */
+  if (params.visualize) {
+    auto viewer = guik::LightViewer::instance();
+    viewer->update_drawable("coord", glk::Primitives::coordinate_system(), guik::VertexColor(last_T_odom_lidar_end.matrix()));
+    viewer->update_drawable("points", std::make_shared<glk::PointCloudBuffer>(deskewed->points, deskewed->size()), guik::FlatOrange());
+    viewer->update_drawable("target", std::make_shared<glk::PointCloudBuffer>(target_ivox->voxel_points()), guik::Rainbow());
+    viewer->spin_once();
+  }
 }
 
 void DynamicPointCloudIntegrator::voxelgrid_task() {
@@ -176,11 +177,10 @@ gtsam_ext::Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
   points.reserve(voxelgrid.size());
   intensities.reserve(voxelgrid.size());
 
-  for(const auto& voxel: voxelgrid) {
+  for (const auto& voxel : voxelgrid) {
     points.emplace_back(voxel.second.cast<float>().head<3>());
     intensities.emplace_back(voxel.second.w());
   }
-
 
   auto frame = std::make_shared<gtsam_ext::FrameCPU>(points);
   frame->add_intensities(intensities);

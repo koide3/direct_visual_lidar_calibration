@@ -27,12 +27,13 @@ public:
   DynamicPointCloudIntegratorParams();
   ~DynamicPointCloudIntegratorParams();
 
+  bool visualize;         ///< If true, show integrated points
   int num_threads;        ///< Number of threads
   int k_neighbors;        ///< Number of neighbor points for covariance estimation
   int target_num_points;  ///< Target number of points for downsampling
 
-  double min_distance;        ///< Points closer than this will be discarded
-  double voxel_resolution;    ///< Dense target model downsampling resolution
+  double min_distance;      ///< Points closer than this will be discarded
+  double voxel_resolution;  ///< Dense target model downsampling resolution
 };
 
 /**
@@ -64,4 +65,4 @@ private:
   ConcurrentQueue<std::tuple<gtsam_ext::Frame::ConstPtr, gtsam::Pose3, gtsam::Pose3>> alignment_results;
   std::unordered_map<Eigen::Vector3i, Eigen::Vector4d, gtsam_ext::Vector3iHash> voxelgrid;
 };
-}
+}  // namespace vlcal

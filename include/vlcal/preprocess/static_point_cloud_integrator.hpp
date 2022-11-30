@@ -22,6 +22,7 @@ public:
   StaticPointCloudIntegratorParams();
   ~StaticPointCloudIntegratorParams();
 
+  bool visualize;
   double voxel_resolution;
   double min_distance;
 };

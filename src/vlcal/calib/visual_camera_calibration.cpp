@@ -7,6 +7,8 @@
 #include <ceres/ceres.h>
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
+#include <ceres/autodiff_first_order_function.h>
+
 #include <sophus/se3.hpp>
 #include <sophus/ceres_local_parameterization.hpp>
 
@@ -25,7 +27,10 @@ namespace vlcal {
 VisualCameraCalibration::VisualCameraCalibration(
   const camera::GenericCameraBase::ConstPtr& proj,
   const std::vector<VisualLiDARData::ConstPtr>& dataset,
-  const VisualCameraCalibrationParams& params) : params(params), proj(proj), dataset(dataset) {}
+  const VisualCameraCalibrationParams& params)
+: params(params),
+  proj(proj),
+  dataset(dataset) {}
 
 Eigen::Isometry3d VisualCameraCalibration::calibrate(const Eigen::Isometry3d& init_T_camera_lidar) {
   Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar;
@@ -33,7 +38,7 @@ Eigen::Isometry3d VisualCameraCalibration::calibrate(const Eigen::Isometry3d& in
   // Outer loop
   for (int i = 0; i < params.max_outer_iterations; i++) {
     Eigen::Isometry3d new_T_camera_lidar;
-    switch(params.registration_type) {
+    switch (params.registration_type) {
       case RegistrationType::NID_BFGS:
         new_T_camera_lidar = estimate_pose_bfgs(T_camera_lidar);
         break;
@@ -99,7 +104,7 @@ Eigen::Isometry3d VisualCameraCalibration::estimate_pose_nelder_mead(const Eigen
     const Eigen::Isometry3d T_camera_lidar = init_T_camera_lidar * Eigen::Isometry3d(gtsam::Pose3::Expmap(x).matrix());
     double sum_costs = 0.0;
 
-#pragma omp parallel for reduction(+: sum_costs)
+#pragma omp parallel for reduction(+ : sum_costs)
     for (int i = 0; i < costs.size(); i++) {
       sum_costs += costs[i]->calculate(T_camera_lidar);
     }
@@ -139,14 +144,14 @@ public:
 
   void add(const std::shared_ptr<NIDCost>& cost) { costs.emplace_back(cost); }
 
-  template<typename T>
-  bool operator() (const T* params, T* residual) const {
+  template <typename T>
+  bool operator()(const T* params, T* residual) const {
     std::vector<double> values(Sophus::SE3d::num_parameters);
     std::transform(params, params + Sophus::SE3d::num_parameters, values.begin(), [](const auto& x) { return get_real(x); });
     const Eigen::Map<const Sophus::SE3d> T_camera_lidar(values.data());
     const Sophus::SE3d delta = init_T_camera_lidar.inverse() * T_camera_lidar;
 
-    if(delta.translation().norm() > 0.2 || Eigen::AngleAxisd(delta.rotationMatrix()).angle() > 2.0 * M_PI / 180.0) {
+    if (delta.translation().norm() > 0.2 || Eigen::AngleAxisd(delta.rotationMatrix()).angle() > 2.0 * M_PI / 180.0) {
       return false;
     }
 
@@ -209,7 +214,6 @@ Eigen::Isometry3d VisualCameraCalibration::estimate_pose_bfgs(const Eigen::Isome
 
   auto cost = new ceres::AutoDiffFirstOrderFunction<MultiNIDCost, Sophus::SE3d::num_parameters>(sum_nid);
   ceres::GradientProblem problem(cost, new Sophus::LocalParameterization<Sophus::SE3>());
-
 
   ceres::GradientProblemSolver::Options options;
   options.minimizer_progress_to_stdout = true;
