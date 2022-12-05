@@ -17,7 +17,7 @@ StaticPointCloudIntegrator::StaticPointCloudIntegrator(const StaticPointCloudInt
 
 StaticPointCloudIntegrator::~StaticPointCloudIntegrator() {}
 
-void StaticPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points) {
+void StaticPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_points) {
   for (int i = 0; i < raw_points->size(); i++) {
     const auto& pt = raw_points->points[i];
     const double intensity = raw_points->intensities[i];
@@ -39,7 +39,7 @@ void StaticPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr&
   }
 }
 
-gtsam_ext::Frame::ConstPtr StaticPointCloudIntegrator::get_points() {
+Frame::ConstPtr StaticPointCloudIntegrator::get_points() {
   std::vector<Eigen::Vector3f> points;
   std::vector<float> intensities;
 
@@ -51,7 +51,7 @@ gtsam_ext::Frame::ConstPtr StaticPointCloudIntegrator::get_points() {
     intensities.emplace_back(voxel.second.w());
   }
 
-  auto frame = std::make_shared<gtsam_ext::FrameCPU>(points);
+  auto frame = std::make_shared<FrameCPU>(points);
   frame->add_intensities(intensities);
   return frame;
 }

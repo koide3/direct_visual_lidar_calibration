@@ -1,7 +1,7 @@
 #include <vlcal/common/visual_lidar_data.hpp>
 
 #include <opencv2/opencv.hpp>
-#include <glim/util/console_colors.hpp>
+#include <vlcal/common/console_colors.hpp>
 
 #include <glk/io/ply_io.hpp>
 
@@ -12,17 +12,17 @@ VisualLiDARData::VisualLiDARData(const std::string& data_path, const std::string
 
   image = cv::imread(data_path + "/" + bag_name + ".png", 0);
   if (!image.data) {
-    std::cerr << glim::console::bold_red << "warning: failed to load " << data_path + "/" + bag_name + ".png" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "warning: failed to load " << data_path + "/" + bag_name + ".png" << vlcal::console::reset << std::endl;
     abort();
   }
 
   auto ply = glk::load_ply(data_path + "/" + bag_name + ".ply");
   if (!ply) {
-    std::cerr << glim::console::bold_red << "warning: failed to load " << data_path + "/" + bag_name + ".ply" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "warning: failed to load " << data_path + "/" + bag_name + ".ply" << vlcal::console::reset << std::endl;
     abort();
   }
 
-  points = std::make_shared<gtsam_ext::FrameCPU>(ply->vertices);
+  points = std::make_shared<FrameCPU>(ply->vertices);
   points->add_intensities(ply->intensities);
 }
 

@@ -13,9 +13,9 @@
 
 #include <nlohmann/json.hpp>
 
-#include <gtsam_ext/types/frame_cpu.hpp>
-#include <glim/util/time_keeper.hpp>
-#include <glim/util/console_colors.hpp>
+#include <vlcal/common/frame_cpu.hpp>
+#include <vlcal/common/time_keeper.hpp>
+#include <vlcal/common/console_colors.hpp>
 
 #include <camera/create_camera.hpp>
 #include <vlcal/common/estimate_fov.hpp>
@@ -94,7 +94,7 @@ bool Preprocess::run(int argc, char** argv) {
   }
 
   if (bag_filenames.empty()) {
-    std::cerr << glim::console::bold_red << "error: no input bags!!" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "error: no input bags!!" << vlcal::console::reset << std::endl;
     return 1;
   }
 
@@ -102,7 +102,7 @@ bool Preprocess::run(int argc, char** argv) {
 
   if (vm.count("bag_id")) {
     const int bag_id = vm["bag_id"].as<int>();
-    std::cerr << glim::console::bold_yellow << "use only " << bag_filenames[bag_id] << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_yellow << "use only " << bag_filenames[bag_id] << vlcal::console::reset << std::endl;
     const std::string bag_filename = bag_filenames[bag_id];
     bag_filenames = {bag_filename};
   }
@@ -111,9 +111,9 @@ bool Preprocess::run(int argc, char** argv) {
     const int first_n_bags = vm["first_n_bags"].as<int>();
     bag_filenames.erase(bag_filenames.begin() + first_n_bags, bag_filenames.end());
 
-    std::cerr << glim::console::bold_yellow << "use only the following rosbags:" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_yellow << "use only the following rosbags:" << vlcal::console::reset << std::endl;
     for (const auto& bag_filename : bag_filenames) {
-      std::cerr << glim::console::bold_yellow << "- " << bag_filename << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_yellow << "- " << bag_filename << vlcal::console::reset << std::endl;
     }
   }
 
@@ -143,7 +143,7 @@ bool Preprocess::run(int argc, char** argv) {
   int num_threads_per_bag = omp_get_max_threads();
   std::cout << "processing images and points (num_threads_per_bag=" << num_threads_per_bag << ")" << std::endl;
 
-  std::vector<gtsam_ext::Frame::ConstPtr> lidar_points(bag_filenames.size());
+  std::vector<Frame::ConstPtr> lidar_points(bag_filenames.size());
 
   // omp_set_max_active_levels(2);
   // #pragma omp parallel for
@@ -258,17 +258,17 @@ std::tuple<std::string, std::string, std::string> Preprocess::get_topics(const b
     for (const auto& [topic, type] : topics_and_types) {
       if (type.find("CameraInfo") != std::string::npos) {
         if (!camera_info_topic.empty()) {
-          std::cerr << glim::console::bold_yellow << "warning: bag constains multiple camera_info topics!!" << glim::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_yellow << "warning: bag constains multiple camera_info topics!!" << vlcal::console::reset << std::endl;
         }
         camera_info_topic = topic;
       } else if (type.find("Image") != std::string::npos) {
         if (!image_topic.empty()) {
-          std::cerr << glim::console::bold_yellow << "warning: bag constains multiple image topics!!" << glim::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_yellow << "warning: bag constains multiple image topics!!" << vlcal::console::reset << std::endl;
         }
         image_topic = topic;
       } else if (type.find("PointCloud2") != std::string::npos) {
         if (!points_topic.empty()) {
-          std::cerr << glim::console::bold_yellow << "warning: bag constains multiple points topics!!" << glim::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_yellow << "warning: bag constains multiple points topics!!" << vlcal::console::reset << std::endl;
         }
         points_topic = topic;
       }
@@ -311,7 +311,7 @@ std::string Preprocess::get_intensity_channel(const boost::program_options::vari
   }
 
   if (intensity_channel == "auto") {
-    std::cerr << glim::console::bold_red << "error: failed to determine point intensity channel automatically" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "error: failed to determine point intensity channel automatically" << vlcal::console::reset << std::endl;
   }
 
   return intensity_channel;
@@ -325,14 +325,14 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
   //
   cv::Size image_size = get_image_size(bag_filename, image_topic);
   if (image_size.width == 0 && image_size.height == 0) {
-    std::cerr << glim::console::bold_yellow << "warning: image size is not set (image_topic=" << image_topic << ")" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_yellow << "warning: image size is not set (image_topic=" << image_topic << ")" << vlcal::console::reset << std::endl;
   }
 
   std::string camera_model = vm["camera_model"].as<std::string>();
   if (camera_model != "auto") {
     const std::unordered_set<std::string> valid_camera_models = {"plumb_bob", "fisheye", "omnidir", "equirectangular"};
     if (!valid_camera_models.count(camera_model)) {
-      std::cerr << glim::console::bold_red << "error: invalid camera model " << camera_model << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: invalid camera model " << camera_model << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -360,7 +360,7 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
   return {distortion_model, image_size, intrinsics, distortion_coeffs};
 }
 
-std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> Preprocess::get_image_and_points(
+std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
   const boost::program_options::variables_map& vm,
   const std::string& bag_filename,
   const std::string& image_topic,
@@ -370,13 +370,13 @@ std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> Preprocess::get_image_and_points(
   //
   cv::Mat image = get_image(bag_filename, image_topic);
   if (!image.data) {
-    std::cerr << glim::console::bold_red << "error: failed to obtain an image (image_topic=" << image_topic << ")" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "error: failed to obtain an image (image_topic=" << image_topic << ")" << vlcal::console::reset << std::endl;
     abort();
   }
   cv::equalizeHist(image.clone(), image);
 
   // integrate points
-  glim::TimeKeeper time_keeper;
+  TimeKeeper time_keeper;
   std::unique_ptr<vlcal::PointCloudIntegrator> points_integrator;
 
   if (vm.count("dynamic_lidar_integration")) {
@@ -402,7 +402,7 @@ std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> Preprocess::get_image_and_points(
     }
     time_keeper.process(raw_points);
 
-    auto points = std::make_shared<gtsam_ext::FrameCPU>(raw_points->points);
+    auto points = std::make_shared<FrameCPU>(raw_points->points);
     points->add_times(raw_points->times);
     points->add_intensities(raw_points->intensities);
     points_integrator->insert_points(points);

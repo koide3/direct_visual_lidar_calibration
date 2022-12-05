@@ -10,7 +10,7 @@
 #include <gtsam/geometry/Pose3.h>
 
 #include <dfo/nelder_mead.hpp>
-#include <glim/util/console_colors.hpp>
+#include <vlcal/common/console_colors.hpp>
 
 #include <camera/create_camera.hpp>
 #include <vlcal/common/estimate_fov.hpp>
@@ -28,7 +28,7 @@ public:
   InitialGuessAuto(const std::string& data_path) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -59,13 +59,13 @@ public:
   }
 
   std::vector<std::pair<Eigen::Vector2d, Eigen::Vector4d>>
-  read_correspondences(const std::string& data_path, const std::string& bag_name, const gtsam_ext::Frame::ConstPtr& points) {
+  read_correspondences(const std::string& data_path, const std::string& bag_name, const Frame::ConstPtr& points) {
     cv::Mat point_indices_8uc4 = cv::imread(data_path + "/" + bag_name + "_lidar_indices.png", -1);
     cv::Mat point_indices = cv::Mat(point_indices_8uc4.rows, point_indices_8uc4.cols, CV_32SC1, reinterpret_cast<int*>(point_indices_8uc4.data));
 
     std::ifstream matches_ifs(data_path + "/" + bag_name + "_matches.json");
     if(!matches_ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path + "/" + bag_name + "_matches.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/" + bag_name + "_matches.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -99,7 +99,7 @@ public:
         }
 
         if (point_index < 0) {
-          std::cerr << glim::console::bold_yellow << "warning: ignore keypoint in a blank region!!" << glim::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_yellow << "warning: ignore keypoint in a blank region!!" << vlcal::console::reset << std::endl;
         }
         continue;
       }
@@ -130,8 +130,8 @@ public:
 
     std::ofstream ofs(data_path + "/calib.json");
     if(!ofs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path + "/calib.json"
-                << " for writing" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/calib.json"
+                << " for writing" << vlcal::console::reset << std::endl;
       return;
     }
 

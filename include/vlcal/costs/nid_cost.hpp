@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <sophus/se3.hpp>
 #include <opencv2/core.hpp>
-#include <gtsam_ext/types/frame.hpp>
+#include <vlcal/common/frame.hpp>
 #include <camera/generic_camera_base.hpp>
 
 namespace vlcal {
@@ -20,7 +20,7 @@ double get_real(const double& x) {
 
 class NIDCost {
 public:
-  NIDCost(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& normalized_image, const gtsam_ext::Frame::ConstPtr& points, const int bins = 16)
+  NIDCost(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& normalized_image, const Frame::ConstPtr& points, const int bins = 16)
   : proj(proj),
     normalized_image(normalized_image.clone()),
     points(points),
@@ -109,7 +109,7 @@ public:
 private:
   const camera::GenericCameraBase::ConstPtr proj;
   const cv::Mat normalized_image;
-  const gtsam_ext::Frame::ConstPtr points;
+  const Frame::ConstPtr points;
 
   const int bins;
   Eigen::Matrix<double, 4, 4> spline_coeffs;

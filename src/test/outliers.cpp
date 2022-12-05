@@ -13,7 +13,7 @@
 #include <gtsam_ext/util/expressions.hpp>
 
 #include <dfo/nelder_mead.hpp>
-#include <glim/util/console_colors.hpp>
+#include <vlcal/common/console_colors.hpp>
 
 #include <camera/create_camera.hpp>
 #include <vlcal/common/estimate_fov.hpp>
@@ -31,7 +31,7 @@ public:
   OutliersViewer(const std::string& data_path) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -112,7 +112,7 @@ public:
 
     std::ifstream matches_ifs(data_path + "/" + bag_name + "_matches.json");
     if (!matches_ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path + "/" + bag_name + "_matches.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/" + bag_name + "_matches.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -146,7 +146,7 @@ public:
         }
 
         if (point_index < 0) {
-          std::cerr << glim::console::bold_yellow << "warning: ignore keypoint in a blank region!!" << glim::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_yellow << "warning: ignore keypoint in a blank region!!" << vlcal::console::reset << std::endl;
         }
         continue;
       }

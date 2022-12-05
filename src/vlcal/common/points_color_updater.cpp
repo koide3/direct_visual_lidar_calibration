@@ -16,13 +16,13 @@ PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr
   }
   icosahedron.spherize();
 
-  points = std::make_shared<gtsam_ext::FrameCPU>(icosahedron.vertices);
+  points = std::make_shared<FrameCPU>(icosahedron.vertices);
   intensity_colors.resize(points->size(), Eigen::Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
 
   cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points->points, points->size());
 }
 
-PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image, const gtsam_ext::FrameCPU::ConstPtr& points)
+PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image, const FrameCPU::ConstPtr& points)
 : proj(proj),
   min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows})  + 3.0 * M_PI / 180.0)),
   image(image),

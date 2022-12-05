@@ -9,14 +9,14 @@
 #include <camera/equirectangular.hpp>
 #include <camera/generic_camera.hpp>
 
-#include <glim/util/console_colors.hpp>
+#include <vlcal/common/console_colors.hpp>
 
 namespace camera {
 
 template <typename Projection>
 camera::GenericCameraBase::ConstPtr create_camera(const std::vector<double>& intrinsics, const std::vector<double>& distortion_coeffs) {
   if (intrinsics.size() != camera::CameraModelTraits<Projection>::num_intrinsic_params) {
-    std::cerr << glim::console::bold_red << "error: num of intrinsic parameters mismatch!!" << glim::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "error: num of intrinsic parameters mismatch!!" << vlcal::console::reset << std::endl;
     return nullptr;
   }
 
@@ -43,7 +43,7 @@ camera::GenericCameraBase::ConstPtr create_camera(const std::string& camera_mode
     return create_camera<camera::EquirectangularProjection>(intrinsics, distortion_coeffs);
   }
 
-  std::cerr << glim::console::bold_red << "error: unknown camera model " << camera_model << glim::console::reset << std::endl;
+  std::cerr << vlcal::console::bold_red << "error: unknown camera model " << camera_model << vlcal::console::reset << std::endl;
   return nullptr;
 }
 

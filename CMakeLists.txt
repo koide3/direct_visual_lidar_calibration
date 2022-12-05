@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.2)
 project(direct_visual_lidar_calibration)
 
-add_compile_options(-std=c++20)
+add_compile_options(-std=c++17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -20,9 +20,9 @@ endif()
 
 find_package(PCL REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options)
-find_package(glim REQUIRED)
 find_package(Iridescence REQUIRED)
 
 find_package(OpenMP)
@@ -34,6 +34,11 @@ endif()
 # direct_visual_lidar_calibration
 add_library(direct_visual_lidar_calibration SHARED
   src/camera/create_camera.cpp
+  src/vlcal/common/frame.cpp
+  src/vlcal/common/frame_cpu.cpp
+  src/vlcal/common/ivox.cpp
+  src/vlcal/common/cloud_covariance_estimation.cpp
+  src/vlcal/common/time_keeper.cpp
   src/vlcal/common/estimate_fov.cpp
   src/vlcal/common/estimate_pose.cpp
   src/vlcal/common/points_color_updater.cpp
@@ -55,9 +60,9 @@ target_include_directories(direct_visual_lidar_calibration PUBLIC
   thirdparty/Sophus
   ${Boost_INCLUDE_DIRS}
   ${CERES_INCLUDE_DIRS}
+  ${GTSAM_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${glim_INCLUDE_DIRS}
   ${Iridescence_INCLUDE_DIRS}
 )
 target_link_libraries(direct_visual_lidar_calibration
@@ -65,8 +70,8 @@ target_link_libraries(direct_visual_lidar_calibration
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
   ${CERES_LIBRARIES}
+  ${GTSAM_LIBRARIES}
   ${OpenCV_LIBRARIES}
-  ${glim_LIBRARIES}
   ${Iridescence_LIBRARIES}
 )
 

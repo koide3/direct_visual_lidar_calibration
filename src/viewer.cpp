@@ -4,9 +4,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include <glim/util/console_colors.hpp>
-
 #include <camera/create_camera.hpp>
+#include <vlcal/common/console_colors.hpp>
 #include <vlcal/common/visual_lidar_visualizer.hpp>
 
 #include <guik/viewer/light_viewer.hpp>
@@ -18,7 +17,7 @@ public:
   Viewer(const std::string& data_path) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -62,7 +61,7 @@ public:
 
     if(T_labels.empty()) {
       viewer->append_text("error: no transformation found in calib.json!!");
-      std::cerr << glim::console::bold_red << "error: no transformation found in calib.json!!" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: no transformation found in calib.json!!" << vlcal::console::reset << std::endl;
       T_labels.emplace_back("NONE");
       T_lidar_camera.emplace_back(Eigen::Isometry3d::Identity());
     }

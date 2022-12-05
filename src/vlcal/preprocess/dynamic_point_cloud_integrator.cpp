@@ -1,18 +1,17 @@
 #include <vlcal/preprocess/dynamic_point_cloud_integrator.hpp>
 
+#include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
-#include <gtsam/slam/BetweenFactor.h>
+#include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
 
-#include <gtsam_ext/ann/ivox.hpp>
-#include <gtsam_ext/ann/kdtree2.hpp>
-#include <gtsam_ext/types/frame_cpu.hpp>
-#include <gtsam_ext/util/covariance_estimation.hpp>
-#include <gtsam_ext/factors/integrated_ct_gicp_factor.hpp>
-#include <gtsam_ext/optimizers/levenberg_marquardt_ext.hpp>
-#include <gtsam_ext/util/vector3i_hash.hpp>
+#include <vlcal/common/ivox.hpp>
+#include <vlcal/common/kdtree2.hpp>
+#include <vlcal/common/frame_cpu.hpp>
+#include <vlcal/common/integrated_ct_gicp_factor.hpp>
+#include <vlcal/common/vector3i_hash.hpp>
 
-#include <glim/common/cloud_covariance_estimation.hpp>
+#include <vlcal/common/cloud_covariance_estimation.hpp>
 
 #include <glk/pointcloud_buffer.hpp>
 #include <glk/primitives/primitives.hpp>
@@ -35,7 +34,7 @@ DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloud
   last_T_odom_lidar_begin = gtsam::Pose3();
   last_T_odom_lidar_end = gtsam::Pose3();
 
-  target_ivox.reset(new gtsam_ext::iVox(1.0, 0.05, 100));
+  target_ivox.reset(new iVox(1.0, 0.05, 100));
 
   voxelgrid_thread = std::thread([this] { voxelgrid_task(); });
 }
@@ -47,14 +46,14 @@ DynamicPointCloudIntegrator::~DynamicPointCloudIntegrator() {
   }
 }
 
-void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr& raw_points_) {
-  auto raw_points = gtsam_ext::sort_by_time(raw_points_);
-  auto points = gtsam_ext::randomgrid_sampling(raw_points, 0.5, static_cast<double>(params.target_num_points) / raw_points->size(), mt);
+void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_points_) {
+  auto raw_points = sort_by_time(raw_points_);
+  auto points = randomgrid_sampling(raw_points, 0.5, static_cast<double>(params.target_num_points) / raw_points->size(), mt);
 
   std::vector<int> neighbors(points->size() * params.k_neighbors);
 
   // Find kNN
-  gtsam_ext::KdTree2<gtsam_ext::Frame> tree(points);
+  KdTree2<Frame> tree(points);
 #pragma omp parallel for num_threads(params.num_threads)
   for (int i = 0; i < points->size(); i++) {
     std::vector<size_t> k_indices(params.k_neighbors);
@@ -64,7 +63,7 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
   }
 
   // Estimate covariances
-  glim::CloudCovarianceEstimation covariance_estimation(params.num_threads);
+  CloudCovarianceEstimation covariance_estimation(params.num_threads);
   points->add_covs(covariance_estimation.estimate(points->points_storage, neighbors));
 
   if (!target_ivox->has_points()) {
@@ -84,22 +83,24 @@ void DynamicPointCloudIntegrator::insert_points(const gtsam_ext::Frame::ConstPtr
   values.insert(1, pred_T_odom_lidar_end);
 
   gtsam::NonlinearFactorGraph graph;
-  auto factor = boost::make_shared<gtsam_ext::IntegratedCT_GICPFactor_<gtsam_ext::iVox, gtsam_ext::Frame>>(0, 1, target_ivox, points, target_ivox);
+  auto factor = boost::make_shared<IntegratedCT_GICPFactor_<iVox, Frame>>(0, 1, target_ivox, points, target_ivox);
   factor->set_num_threads(params.num_threads);
   graph.add(factor);
 
   graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose3>>(0, gtsam::Pose3(pred_T_odom_lidar_begin), gtsam::noiseModel::Isotropic::Precision(6, 1e3));
   graph.emplace_shared<gtsam::BetweenFactor<gtsam::Pose3>>(0, 1, gtsam::Pose3(), gtsam::noiseModel::Isotropic::Precision(6, 1e1));
 
-  gtsam_ext::LevenbergMarquardtExtParams lm_params;
+  gtsam::LevenbergMarquardtParams lm_params;
   lm_params.setMaxIterations(15);
 
-  values = gtsam_ext::LevenbergMarquardtOptimizerExt(graph, values, lm_params).optimize();
+  for (int i=0; i<3; i++) {
+    values = gtsam::LevenbergMarquardtOptimizer(graph, values, lm_params).optimize();
+  }
 
   last_T_odom_lidar_begin = values.at<gtsam::Pose3>(0);
   last_T_odom_lidar_end = values.at<gtsam::Pose3>(1);
 
-  auto deskewed = std::make_shared<gtsam_ext::FrameCPU>(factor->deskewed_source_points(values));
+  auto deskewed = std::make_shared<FrameCPU>(factor->deskewed_source_points(values));
   deskewed->add_covs(covariance_estimation.estimate(deskewed->points_storage, neighbors));
   deskewed->add_intensities(points->intensities, points->size());
   target_ivox->insert(*deskewed);
@@ -167,7 +168,7 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
   }
 }
 
-gtsam_ext::Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
+Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
   alignment_results.submit_end_of_data();
   voxelgrid_thread.join();
 
@@ -182,7 +183,7 @@ gtsam_ext::Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
     intensities.emplace_back(voxel.second.w());
   }
 
-  auto frame = std::make_shared<gtsam_ext::FrameCPU>(points);
+  auto frame = std::make_shared<FrameCPU>(points);
   frame->add_intensities(intensities);
   return frame;
 }

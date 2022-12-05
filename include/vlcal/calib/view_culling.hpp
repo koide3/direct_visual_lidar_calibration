@@ -1,7 +1,7 @@
 #pragma once
 
 #include <camera/generic_camera_base.hpp>
-#include <gtsam_ext/types/frame_cpu.hpp>
+#include <vlcal/common/frame_cpu.hpp>
 
 namespace vlcal {
 
@@ -22,7 +22,7 @@ public:
   /**
    * @brief Remove points that should not be visible from the viewpoint of the camera
    */
-  gtsam_ext::FrameCPU::Ptr cull(const gtsam_ext::Frame::ConstPtr& points, const Eigen::Isometry3d& T_camera_lidar) const;
+  FrameCPU::Ptr cull(const Frame::ConstPtr& points, const Eigen::Isometry3d& T_camera_lidar) const;
 
 private:
   std::vector<int> view_culling(const std::vector<int>& point_indices, const std::vector<Eigen::Vector4d>& points_camera) const;

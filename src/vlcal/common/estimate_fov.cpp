@@ -5,7 +5,7 @@
 #include <dfo/nelder_mead.hpp>
 #include <dfo/directional_direct_search.hpp>
 
-#include <gtsam_ext/types/frame_cpu.hpp>
+#include <vlcal/common/frame_cpu.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -48,9 +48,9 @@ double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, cons
   return max_fov;
 }
 
-double estimate_lidar_fov(const gtsam_ext::Frame::ConstPtr& points_) {
-  auto points = gtsam_ext::voxelgrid_sampling(points_, 0.2);
-  points = gtsam_ext::filter(points, [](const Eigen::Vector4d& p) { return p.head<3>().norm() > 1.0; });
+double estimate_lidar_fov(const Frame::ConstPtr& points_) {
+  auto points = voxelgrid_sampling(points_, 0.2);
+  points = filter(points, [](const Eigen::Vector4d& p) { return p.head<3>().norm() > 1.0; });
 
   auto cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   cloud->resize(points->size());

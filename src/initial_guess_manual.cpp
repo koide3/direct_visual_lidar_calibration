@@ -9,8 +9,6 @@
 #include <boost/program_options.hpp>
 
 #include <nlohmann/json.hpp>
-#include <glim/util/console_colors.hpp>
-#include <gtsam_ext/types/frame_cpu.hpp>
 
 #include <glk/primitives/primitives.hpp>
 #include <glk/pointcloud_buffer.hpp>
@@ -19,6 +17,7 @@
 #include <guik/viewer/light_viewer.hpp>
 
 #include <camera/create_camera.hpp>
+#include <vlcal/common/console_colors.hpp>
 #include <vlcal/common/estimate_fov.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/visual_lidar_visualizer.hpp>
@@ -77,7 +76,7 @@ public:
   InitialGuessManual(const std::string& data_path) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -155,8 +154,8 @@ public:
 
         std::ofstream ofs(data_path + "/calib.json");
         if (!ofs) {
-          std::cerr << glim::console::bold_red << "error: failed to open " << data_path + "/calib.json"
-                    << " for writing" << glim::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/calib.json"
+                    << " for writing" << vlcal::console::reset << std::endl;
         } else {
           ofs << config.dump(2) << std::endl;
         }

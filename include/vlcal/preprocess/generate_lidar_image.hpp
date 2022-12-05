@@ -1,7 +1,7 @@
 #pragma once
 
 #include <opencv2/core.hpp>
-#include <gtsam_ext/types/frame.hpp>
+#include <vlcal/common/frame.hpp>
 #include <camera/generic_camera_base.hpp>
 
 namespace vlcal {
@@ -18,6 +18,6 @@ std::pair<cv::Mat, cv::Mat> generate_lidar_image(
   const camera::GenericCameraBase::ConstPtr& proj,
   const Eigen::Vector2i& image_size,
   const Eigen::Isometry3d& T_camera_lidar,
-  const gtsam_ext::Frame::ConstPtr& points);
+  const Frame::ConstPtr& points);
 
 }  // namespace vlcal

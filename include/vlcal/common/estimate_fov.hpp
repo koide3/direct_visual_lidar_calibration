@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gtsam_ext/types/frame.hpp>
+#include <vlcal/common/frame.hpp>
 #include <camera/generic_camera_base.hpp>
 
 namespace vlcal {
@@ -26,6 +26,6 @@ double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, cons
  * @param points  LiDAR points
  * @return        LiDAR FoV [rad]
  */
-double estimate_lidar_fov(const gtsam_ext::Frame::ConstPtr& points);
+double estimate_lidar_fov(const Frame::ConstPtr& points);
 
 }  // namespace vlcal

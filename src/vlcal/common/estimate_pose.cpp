@@ -6,7 +6,7 @@
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
 #include <sophus/se3.hpp>
-#include <sophus/ceres_local_parameterization.hpp>
+#include <sophus/ceres_manifold.hpp>
 
 #include <vlcal/common/estimate_fov.hpp>
 #include <vlcal/costs/reprojection_cost.hpp>
@@ -153,7 +153,7 @@ Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
   Sophus::SE3d T_camera_lidar = Sophus::SE3d(init_T_camera_lidar.matrix());
   
   ceres::Problem problem;
-  problem.AddParameterBlock(T_camera_lidar.data(), Sophus::SE3d::num_parameters, new Sophus::LocalParameterization<Sophus::SE3>());
+  problem.AddParameterBlock(T_camera_lidar.data(), Sophus::SE3d::num_parameters, new Sophus::Manifold<Sophus::SE3>());
   // The default ceres (2.0.0) on Ubuntu 20.04 does not have manifold.hpp yet
   // problem.AddParameterBlock(T_camera_lidar.data(), Sophus::SE3d::num_parameters, new Sophus::Manifold<Sophus::SE3>());
 

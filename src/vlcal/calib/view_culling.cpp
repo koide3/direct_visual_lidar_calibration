@@ -18,7 +18,7 @@ ViewCulling::ViewCulling(const camera::GenericCameraBase::ConstPtr& proj, const 
 
 ViewCulling ::~ViewCulling() {}
 
-gtsam_ext::FrameCPU::Ptr ViewCulling::cull(const gtsam_ext::Frame::ConstPtr& points, const Eigen::Isometry3d& T_camera_lidar) const {
+FrameCPU::Ptr ViewCulling::cull(const Frame::ConstPtr& points, const Eigen::Isometry3d& T_camera_lidar) const {
   std::vector<int> point_indices(points->size());
   std::vector<Eigen::Vector4d> points_camera(points->size());
 
@@ -28,7 +28,7 @@ gtsam_ext::FrameCPU::Ptr ViewCulling::cull(const gtsam_ext::Frame::ConstPtr& poi
   }
 
   point_indices = view_culling(point_indices, points_camera);
-  return gtsam_ext::sample(points, point_indices);
+  return sample(points, point_indices);
 }
 
 std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices, const std::vector<Eigen::Vector4d>& points_camera) const {

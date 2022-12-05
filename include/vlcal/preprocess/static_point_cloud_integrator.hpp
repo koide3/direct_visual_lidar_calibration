@@ -6,8 +6,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <gtsam_ext/types/frame_cpu.hpp>
-#include <gtsam_ext/util/vector3i_hash.hpp>
+#include <vlcal/common/frame_cpu.hpp>
+#include <vlcal/common/vector3i_hash.hpp>
 #include <vlcal/common/concurrent_queue.hpp>
 #include <vlcal/preprocess/point_cloud_integrator.hpp>
 
@@ -32,12 +32,12 @@ public:
   StaticPointCloudIntegrator(const StaticPointCloudIntegratorParams& params = StaticPointCloudIntegratorParams());
   ~StaticPointCloudIntegrator();
 
-  virtual void insert_points(const gtsam_ext::Frame::ConstPtr& raw_points) override;
-  virtual gtsam_ext::Frame::ConstPtr get_points() override;
+  virtual void insert_points(const Frame::ConstPtr& raw_points) override;
+  virtual Frame::ConstPtr get_points() override;
 
 private:
   const StaticPointCloudIntegratorParams params;
 
-  std::unordered_map<Eigen::Vector3i, Eigen::Vector4d, gtsam_ext::Vector3iHash> voxelgrid;
+  std::unordered_map<Eigen::Vector3i, Eigen::Vector4d, Vector3iHash> voxelgrid;
 };
 }

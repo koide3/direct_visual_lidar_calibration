@@ -14,7 +14,7 @@
 #include <glk/primitives/primitives.hpp>
 #include <guik/viewer/light_viewer.hpp>
 
-#include <glim/util/console_colors.hpp>
+#include <vlcal/common/console_colors.hpp>
 
 #include <test/detect_sphere.hpp>
 
@@ -27,7 +27,7 @@ public:
   ReferenceCalibration(const std::string& data_path) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
       abort();
     }
 

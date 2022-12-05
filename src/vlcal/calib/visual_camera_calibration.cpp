@@ -10,7 +10,7 @@
 #include <ceres/autodiff_first_order_function.h>
 
 #include <sophus/se3.hpp>
-#include <sophus/ceres_local_parameterization.hpp>
+#include <sophus/ceres_manifold.hpp>
 
 #include <dfo/nelder_mead.hpp>
 #include <gtsam/geometry/Pose3.h>
@@ -213,7 +213,7 @@ Eigen::Isometry3d VisualCameraCalibration::estimate_pose_bfgs(const Eigen::Isome
   }
 
   auto cost = new ceres::AutoDiffFirstOrderFunction<MultiNIDCost, Sophus::SE3d::num_parameters>(sum_nid);
-  ceres::GradientProblem problem(cost, new Sophus::LocalParameterization<Sophus::SE3>());
+  ceres::GradientProblem problem(cost, new Sophus::Manifold<Sophus::SE3>());
 
   ceres::GradientProblemSolver::Options options;
   options.minimizer_progress_to_stdout = true;

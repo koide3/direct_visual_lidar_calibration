@@ -7,7 +7,6 @@
 #include <nlohmann/json.hpp>
 
 #include <gtsam/geometry/Pose3.h>
-#include <glim/util/console_colors.hpp>
 
 #include <dfo/nelder_mead.hpp>
 #include <dfo/directional_direct_search.hpp>
@@ -17,6 +16,7 @@
 
 #include <camera/create_camera.hpp>
 #include <vlcal/costs/nid_cost.hpp>
+#include <vlcal/common/console_colors.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 #include <vlcal/common/points_color_updater.hpp>
 #include <vlcal/common/visual_lidar_visualizer.hpp>
@@ -29,7 +29,7 @@ public:
   VisualLiDARCalibration(const std::string& data_path, const boost::program_options::variables_map& vm) : data_path(data_path) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path << "/calib.json" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -65,7 +65,7 @@ public:
     }
 
     if (init_values.empty()) {
-      std::cerr << glim::console::bold_red << "error: initial guess of T_lidar_camera must be computed before calibration!!" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: initial guess of T_lidar_camera must be computed before calibration!!" << vlcal::console::reset << std::endl;
       abort();
     }
 
@@ -94,7 +94,7 @@ public:
     } else if (registration_type == "nid_nelder_mead") {
       params.registration_type = RegistrationType::NID_NELDER_MEAD;
     } else {
-      std::cerr << glim::console::bold_yellow << "warning: unknown registration type " << registration_type << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_yellow << "warning: unknown registration type " << registration_type << vlcal::console::reset << std::endl;
     }
 
     params.callback = [&](const Eigen::Isometry3d& T_camera_lidar) { vis.set_T_camera_lidar(T_camera_lidar); };
@@ -122,8 +122,8 @@ public:
 
     std::ofstream ofs(data_path + "/calib.json");
     if (!ofs) {
-      std::cerr << glim::console::bold_red << "error: failed to open " << data_path + "/calib.json"
-                << "for writing" << glim::console::reset << std::endl;
+      std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/calib.json"
+                << "for writing" << vlcal::console::reset << std::endl;
     }
     ofs << config.dump(2) << std::endl;
 

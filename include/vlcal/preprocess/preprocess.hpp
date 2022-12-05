@@ -4,15 +4,15 @@
 #include <vector>
 #include <opencv2/core.hpp>
 #include <boost/program_options.hpp>
-#include <gtsam_ext/types/frame.hpp>
-#include <glim/util/raw_points.hpp>
+#include <vlcal/common/frame.hpp>
+#include <vlcal/common/raw_points.hpp>
 
 namespace vlcal {
 
 class PointCloudReader {
 public:
   virtual ~PointCloudReader() {}
-  virtual glim::RawPoints::Ptr read_next() = 0;
+  virtual RawPoints::Ptr read_next() = 0;
 };
 
 class Preprocess {
@@ -37,7 +37,7 @@ private:
   std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>>
   get_camera_params(const boost::program_options::variables_map& vm, const std::string& bag_filename, const std::string& camera_info_topic, const std::string& image_topic);
 
-  std::pair<cv::Mat, gtsam_ext::Frame::ConstPtr> get_image_and_points(
+  std::pair<cv::Mat, Frame::ConstPtr> get_image_and_points(
     const boost::program_options::variables_map& vm,
     const std::string& bag_filename,
     const std::string& image_topic,
