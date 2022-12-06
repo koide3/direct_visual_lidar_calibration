@@ -78,6 +78,18 @@ target_link_libraries(direct_visual_lidar_calibration
 
 if($ENV{ROS_VERSION} EQUAL 1)
   # ROS1
+  add_executable(preprocess
+    src/preprocess_ros1.cpp
+  )
+  target_link_libraries(preprocess
+    direct_visual_lidar_calibration
+  )
+  target_include_directories(preprocess PUBLIC
+    ${catkin_INCLUDE_DIRS}
+  )
+  target_link_libraries(preprocess
+    ${catkin_LIBRARIES}
+  )
 else()
   # ROS2
   ament_auto_add_executable(preprocess
