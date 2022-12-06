@@ -10,8 +10,8 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#define GLIM_ROS2
-#include <glim/util/ros_cloud_converter.hpp>
+#define VLCAL_ROS2
+#include <vlcal/common/ros_cloud_converter.hpp>
 
 namespace vlcal {
 
@@ -25,7 +25,7 @@ public:
     reader.set_filter(filter);
   }
 
-  virtual glim::RawPoints::Ptr read_next() override {
+  virtual RawPoints::Ptr read_next() override {
     if (!reader.has_next()) {
       return nullptr;
     }
@@ -38,7 +38,7 @@ public:
     auto points_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
     pointcloud_serialization.deserialize_message(&serialized_msg, points_msg.get());
 
-    return glim::extract_raw_points(points_msg, intensity_channel);
+    return extract_raw_points(points_msg, intensity_channel);
   }
 
 private:
