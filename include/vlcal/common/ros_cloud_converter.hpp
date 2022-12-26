@@ -49,7 +49,7 @@ inline ros::Time from_sec(const double time) {
   return stamp;
 }
 
-}  // namespace glim
+}  // namespace vlcal
 #endif
 
 namespace vlcal {
