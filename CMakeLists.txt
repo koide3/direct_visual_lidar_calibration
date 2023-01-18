@@ -15,6 +15,7 @@ if($ENV{ROS_VERSION} EQUAL 1)
 else()
   # ROS2
   find_package(ament_cmake_auto REQUIRED)
+  find_package(ament_cmake_python REQUIRED)
   ament_auto_find_build_dependencies()
 endif()
 
@@ -165,6 +166,8 @@ if($ENV{ROS_VERSION} EQUAL 1)
   catkin_package()
 else()
   # ROS2
+  ament_python_install_package(${PROJECT_NAME})
+  install(PROGRAMS scripts/find_matches_superglue.py DESTINATION lib/${PROJECT_NAME})
   ament_export_libraries(direct_visual_lidar_calibration)
   ament_auto_package()
 endif()

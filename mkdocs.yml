@@ -1,0 +1,45 @@
+site_name: "direct_visual_lidar_calibration"
+site_author: k.koide
+repo_url: https://github.com/koide3/direct_visual_lidar_calibration
+site_url: https://koide3.github.io/direct_visual_lidar_calibration/
+site_description: "LiDAR-Camera extrinsic calibration toolbox"
+
+theme: 
+    name: material
+    palette:
+        primary: indigo
+    front:
+        text: Roboto
+
+markdown_extensions:
+    - meta
+    - attr_list
+    - admonition
+    - pymdownx.highlight:
+        anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.superfences
+    - pymdownx.emoji:
+        emoji_index: !!python/name:materialx.emoji.twemoji
+        emoji_generator: !!python/name:materialx.emoji.to_svg
+    - fontawesome_markdown
+
+copyright: Copyright &copy; 2023 Kenji Koide
+extra:
+    social:
+        - icon: material/home
+          link: https://staff.aist.go.jp/k.koide/
+        - icon: fontawesome/brands/github
+          link: https://github.com/koide3/direct_visual_lidar_calibration
+        - icon: fontawesome/brands/twitter
+          link: https://twitter.com/k_koide3
+
+extra_css:
+    - "css/custom.css"
+    - "https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css"
+
+nav:
+    - 'index.md'
+    - 'installation.md'
+    - 'usage.md'

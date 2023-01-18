@@ -12,7 +12,7 @@ IntegratedCT_ICPFactor_<TargetFrame, SourceFrame>::IntegratedCT_ICPFactor_(
   const std::shared_ptr<const TargetFrame>& target,
   const std::shared_ptr<const SourceFrame>& source,
   const std::shared_ptr<NearestNeighborSearch>& target_tree)
-: gtsam::NonlinearFactor(gtsam::cref_list_of<2>(source_t0_key)(source_t1_key)),
+: gtsam::NonlinearFactor(gtsam::KeyVector{source_t0_key, source_t1_key}),
   num_threads(1),
   max_correspondence_distance_sq(1.0),
   target(target),
@@ -225,4 +225,4 @@ std::vector<Eigen::Vector4d, Eigen::aligned_allocator<Eigen::Vector4d>> Integrat
   return deskewed;
 }
 
-}  // namespace gtsam_ext
+}  // namespace vlcal
