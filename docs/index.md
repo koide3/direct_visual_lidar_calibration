@@ -8,9 +8,9 @@ This package provides a toolbox for LiDAR-Camera calibration that is:
 - **Automatic**: The calibration process is automatic and does not require an initial guess.
 - **Accurate and robust**: It employs a pixel-level direct LiDAR-camera registration algorithm that is more robust and accurate compared to edge-based indirect LiDAR-camera registration.
 
-![Screenshot_20230119_173721](https://user-images.githubusercontent.com/31344317/213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6.png){: style="height:75%;width:75%"}
+![213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6](https://user-images.githubusercontent.com/31344317/213427328-ddf72a71-9aeb-42e8-86a5-9c2ae19890e3.jpg)
 
-# Dependencies
+## Dependencies
 
 - [ROS1/ROS2](https://www.ros.org/)
 - [PCL](https://pointclouds.org/)
@@ -20,14 +20,14 @@ This package provides a toolbox for LiDAR-Camera calibration that is:
 - [Iridescence](https://github.com/koide3/iridescence)
 - [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) [optional]
 
-# License
+## License
 
 This package is released under the MIT license.
 
-# Publication
+## Publication
 
 Koide et al., General, Single-shot, Target-less, and Automatic LiDAR-Camera Extrinsic Calibration Toolbox, ICRA2023, [[PDF]](https://staff.aist.go.jp/k.koide/assets/pdf/icra2023.pdf)
 
-# Contact
+## Contact
 
 Kenji Koide, National Institute of Advanced Industrial Science and Technology (AIST), Japan

@@ -13,9 +13,9 @@ This package provides a toolbox for LiDAR-camera calibration that is:
 
 [![Build](https://github.com/koide3/direct_visual_lidar_calibration/actions/workflows/balm.yaml/badge.svg?branch=main)](https://github.com/koide3/direct_visual_lidar_calibration/actions/workflows/balm.yaml) [![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/koide3/direct_visual_lidar_calibration)](https://hub.docker.com/repository/docker/koide3/direct_visual_lidar_calibration)
 
-<img src="https://user-images.githubusercontent.com/31344317/213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6.png" width="50%">
+![213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6](https://user-images.githubusercontent.com/31344317/213427328-ddf72a71-9aeb-42e8-86a5-9c2ae19890e3.jpg)
 
-# Dependencies
+## Dependencies
 
 - [ROS1/ROS2](https://www.ros.org/)
 - [PCL](https://pointclouds.org/)
@@ -25,14 +25,14 @@ This package provides a toolbox for LiDAR-camera calibration that is:
 - [Iridescence](https://github.com/koide3/iridescence)
 - [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) [optional]
 
-# License
+## License
 
 This package is released under the MIT license.
 
-# Publication
+## Publication
 
 Koide et al., General, Single-shot, Target-less, and Automatic LiDAR-Camera Extrinsic Calibration Toolbox, ICRA2023, [[PDF]](https://staff.aist.go.jp/k.koide/assets/pdf/icra2023.pdf)
 
-# Contact
+## Contact
 
 Kenji Koide, National Institute of Advanced Industrial Science and Technology (AIST), Japan
