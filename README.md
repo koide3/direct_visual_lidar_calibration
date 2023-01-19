@@ -76,13 +76,15 @@ cd .. && colcon build
 
 [Detailed usage]()
 
+Example data: [ouster_pinhole.tar.gz]()
+
 ## Preprocessing
 
 ```bash
 # -a = Automatic topic detection
 # -d = Dynamic points integration
 # -v = Visualization
-ros2 run direct_visual_lidar_calibration preprocess -a -d -v ouster_pinhole ouster_pinhole_preprocessed
+ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhole_preprocessed -a -d -v
 ```
 
 ## Initial guess
@@ -95,7 +97,7 @@ ros2 run direct_visual_lidar_calibration initial_guess_manual ouster_pinhole_pre
 
 ### Automatic estimation
 
-Note: SuperGlue is not allowed to be used for commercial purposes!!
+Note: This process uses SuperGlue, which is not allowed to be used for commercial purposes.
 
 ```bash
 ros2 run direct_visual_lidar_calibration find_matches_superglue.py ouster_pinhole_preprocessed
