@@ -7,14 +7,8 @@
 sudo apt install libomp-dev libboost-all-dev libglm-dev libglfw3-dev libpng-dev libjpeg-dev
 
 # Install GTSAM
-git clone https://github.com/borglab/gtsam
-mkdir gtsam/build && cd gtsam/build
-cmake .. -DGTSAM_BUILD_EXAMPLES_ALWAYS=OFF \
-         -DGTSAM_BUILD_TESTS=OFF \
-         -DGTSAM_WITH_TBB=OFF \
-         -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF
-make -j$(nproc)
-sudo make install
+sudo add-apt-repository ppa:borglab/gtsam-develop
+sudo apt install libgtsam-dev libgtsam-unstable-dev
 
 # Install Ceres
 git clone https://github.com/ceres-solver/ceres-solver
@@ -33,11 +27,11 @@ sudo make install
 
 ## SuperGlue (Optional)
 
-Note: [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork.git) is not allowed to be used for commercial purposes. You must carefully check and follow its licensing conditions!!
+!!!warning
+    [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork.git) is not allowed to be used for commercial purposes. You must carefully check and follow its licensing conditions!!
 
 ```bash
 pip3 install numpy opencv-python torch matplotlib
-
 git clone https://github.com/magicleap/SuperGluePretrainedNetwork.git
 
 echo 'export PYTHONPATH=$PYTHONPATH:/path/to/SuperGluePretrainedNetwork' >> ~/.bashrc

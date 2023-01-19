@@ -8,6 +8,9 @@ This package provides a toolbox for LiDAR-Camera calibration that is:
 - **Automatic**: The calibration process is automatic and does not require an initial guess.
 - **Accurate and robust**: It employs a pixel-level direct LiDAR-camera registration algorithm that is more robust and accurate compared to edge-based indirect LiDAR-camera registration.
 
+
+![Screenshot_20230119_173721](https://user-images.githubusercontent.com/31344317/213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6.png){: style="height:75%;width:75%"}
+
 # License
 
 This package is released under the MIT license.

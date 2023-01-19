@@ -42,4 +42,5 @@ extra_css:
 nav:
     - 'index.md'
     - 'installation.md'
-    - 'usage.md'
+    - 'collection.md'
+    - 'calibration.md'
