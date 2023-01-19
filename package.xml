@@ -17,9 +17,10 @@
   <depend condition="$ROS_VERSION == 2">rclcpp</depend>
   <depend condition="$ROS_VERSION == 2">rosbag2_cpp</depend>
 
-  <depend>sensor_msgs</depend>
+  <depend>fmt</depend>
   <depend>cv_bridge</depend>
   <depend>pcl_ros</depend>
+  <depend>sensor_msgs</depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>

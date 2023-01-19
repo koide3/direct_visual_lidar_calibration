@@ -2,6 +2,8 @@
 
 ![Screenshot_20230119_173747](https://user-images.githubusercontent.com/31344317/213393928-c640e0d8-076a-4272-90b3-c67dfab02358.png){: style="height:75%;width:75%"}
 
+**Example data: ~~ouster_pinhole.tar.gz~~ (will be available soon)**
+
 ## 1. Preprocessing
 
 ```bash

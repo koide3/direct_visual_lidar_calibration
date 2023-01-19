@@ -11,6 +11,15 @@ This package provides a toolbox for LiDAR-Camera calibration that is:
 
 ![Screenshot_20230119_173721](https://user-images.githubusercontent.com/31344317/213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6.png){: style="height:75%;width:75%"}
 
+# Dependencies
+
+- [PCL](https://pointclouds.org/)
+- [OpenCV](https://opencv.org/)
+- [GTSAM](https://gtsam.org/)
+- [Ceres](http://ceres-solver.org/)
+- [Iridescence](https://github.com/koide3/iridescence)
+- [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) [optional]
+
 # License
 
 This package is released under the MIT license.
