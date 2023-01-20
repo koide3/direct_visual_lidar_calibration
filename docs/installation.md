@@ -1,6 +1,16 @@
 # Installation
 
-## Common dependencies
+## Dependencies
+
+- [ROS1/ROS2](https://www.ros.org/)
+- [PCL](https://pointclouds.org/)
+- [OpenCV](https://opencv.org/)
+- [GTSAM](https://gtsam.org/)
+- [Ceres](http://ceres-solver.org/)
+- [Iridescence](https://github.com/koide3/iridescence)
+- [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) [optional]
+
+## Install Common dependencies
 
 ```bash
 # Install dependencies
@@ -25,7 +35,7 @@ make -j$(nproc)
 sudo make install
 ```
 
-## SuperGlue (Optional)
+## Install SuperGlue (Optional)
 
 !!!warning
     [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork.git) is not allowed to be used for commercial purposes. You must carefully check and follow its licensing conditions!!
@@ -38,7 +48,7 @@ echo 'export PYTHONPATH=$PYTHONPATH:/path/to/SuperGluePretrainedNetwork' >> ~/.b
 source ~/.bashrc
 ```
 
-## Build ROS package
+## Build the calibration toolbox
 
 ```bash
 # ROS1

@@ -52,7 +52,7 @@ ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhol
 
 ## 2. Initial guess
 
-### Manual estimation
+### Option1: Manual estimation
 
 ```bash
 ros2 run direct_visual_lidar_calibration initial_guess_manual preprocessed_data_path
@@ -60,7 +60,7 @@ ros2 run direct_visual_lidar_calibration initial_guess_manual preprocessed_data_
 
 1. Right click a 3D point on the point cloud and a corresponding 2D point on the image
 2. Click ```Add picked points``` button
-3. Repeat 1 and 2 for several points (at least three points)
+3. Repeat 1 and 2 for several points (At least three points. The more the better.)
 4. Click ```Estimate``` button to obtain an initial guess of the LiDAR-camera transformation
 5. Check if the image projection result is fine by changing ```blend_weight```
 6. Click ```Save``` button to save the initial guess
@@ -69,7 +69,7 @@ ros2 run direct_visual_lidar_calibration initial_guess_manual preprocessed_data_
 <iframe width="560" height="315" src="https://www.youtube.com/embed/FTlC9RwEVxY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 </div>
 
-### Automatic estimation
+### Option2: Automatic estimation
 
 !!!warning
     SuperGlue is not allowed to be used for commercial purposes!!
@@ -80,7 +80,7 @@ ros2 run direct_visual_lidar_calibration initial_guess_auto preprocessed_data_pa
 ```
 
 !!!note
-    SuperGlue requires the upward directions of camera and LiDAR images are roughly aligned. Use ```--rotate_camera``` and ```--rotate_lidar``` options to ensure this. (e.g., ```--rotate_camera 90```)
+    SuperGlue requires the upward directions of camera and LiDAR images are roughly aligned. Use ```--rotate_camera``` and ```--rotate_lidar``` options to ensure this. (e.g., ```--rotate_camera 90```. Only 90, 180, and 270 are allowed.)
 
 !!!note
     You can find ```*_superglue.png``` saved in the data directory that represents detected 2D-3D correspondences.
@@ -102,6 +102,80 @@ ros2 run direct_visual_lidar_calibration calibrate preprocessed_data_path
 | --nelder_mead_convergence_criteria (default = 1e-8) | Nelder-mead convergence criteria                                                |
 | --auto_quit                                         | Automatically close the viewer after calibration                                |
 | --background                                        | Disable visualization                                                           |
+
+Once the calibration is completed, open ```calib.json``` in the data directory with a text editor and find the calibration result ```T_lidar_camera: [x, y, z, qx, qy, qz, qw]``` that transforms a 3D point in the camera frame into the LiDAR frame (i.e., ```p_lidar = T_lidar_camera * p_camera```).
+
+```calib.json``` also contains camera parameters, manual/automatic initial guess results (```init_T_lidar_camera``` and ```init_T_lidar_camera_auto```), and some meta data.
+
+<details>
+  <summary>calib.json example</summary>
+
+```json
+{
+  "camera": {
+    "camera_model": "plumb_bob",
+    "distortion_coeffs": [
+      -0.0408800300227048,
+      0.08232065129613146,
+      0.0001524417339184569,
+      -0.0002905086459989649,
+      -0.03955344846871078
+    ],
+    "intrinsics": [
+      810.3829359698531,
+      810.2790141092258,
+      822.8441591172331,
+      622.4745298743934
+    ]
+  },
+  "meta": {
+    "bag_names": [
+      "rosbag2_2022_12_09-11_51_00",
+      "rosbag2_2022_12_09-11_51_39",
+      "rosbag2_2022_12_09-11_52_13",
+      "rosbag2_2022_12_09-11_52_50",
+      "rosbag2_2022_12_09-11_53_36"
+    ],
+    "camera_info_topic": "/drone01/camera_info",
+    "data_path": "ouster_pinhole",
+    "image_topic": "/drone01/image/compressed",
+    "intensity_channel": "reflectivity",
+    "points_topic": "/drone01/points"
+  },
+  "results": {
+    "T_lidar_camera": [
+      0.029965406350829532,
+      0.0018510163746144406,
+      0.10836834957603067,
+      -0.5020970411416648,
+      0.49250979122625377,
+      -0.5009468032383634,
+      0.5043659060130069
+    ],
+    "init_T_lidar_camera": [
+      0.22754979133605957,
+      0.14180368185043335,
+      0.09482517838478088,
+      -0.4999842630484326,
+      0.4931746122747289,
+      -0.5037605589800136,
+      0.5030107918869041
+    ],
+    "init_T_lidar_camera_auto": [
+      -0.06012828990854561,
+      0.03957544424313349,
+      0.09638527740996672,
+      -0.5015219498041896,
+      0.4932277405168562,
+      -0.5021955602061449,
+      0.5029927923524125
+    ]
+  }
+}
+```
+
+</details>
+
 
 ## 4. Result inspection
 

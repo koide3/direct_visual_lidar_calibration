@@ -10,15 +10,11 @@ This package provides a toolbox for LiDAR-Camera calibration that is:
 
 ![213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6](https://user-images.githubusercontent.com/31344317/213427328-ddf72a71-9aeb-42e8-86a5-9c2ae19890e3.jpg)
 
-## Dependencies
+## Getting started
 
-- [ROS1/ROS2](https://www.ros.org/)
-- [PCL](https://pointclouds.org/)
-- [OpenCV](https://opencv.org/)
-- [GTSAM](https://gtsam.org/)
-- [Ceres](http://ceres-solver.org/)
-- [Iridescence](https://github.com/koide3/iridescence)
-- [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) [optional]
+1. [Installation](installation.md)
+2. [Data collection](collection.md)
+3. [Calibration](calibration.md)
 
 ## License
 
