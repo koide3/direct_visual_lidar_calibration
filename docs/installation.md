@@ -1,5 +1,8 @@
 # Installation
 
+!!!note
+    We provide docker images so the user can do calibration without installation: [Docker images](docker.md)
+
 ## Dependencies
 
 - [ROS1/ROS2](https://www.ros.org/)

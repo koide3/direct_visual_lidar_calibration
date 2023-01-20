@@ -25,6 +25,12 @@ This package provides a toolbox for LiDAR-camera calibration that is:
 - [Iridescence](https://github.com/koide3/iridescence)
 - [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) [optional]
 
+## Getting started
+
+1. [Installation](https://koide3.github.io/direct_visual_lidar_calibration/installation/) / [Docker images](https://koide3.github.io/direct_visual_lidar_calibration/docker/)
+2. [Data collection](https://koide3.github.io/direct_visual_lidar_calibration/collection/)
+3. [Calibration](https://koide3.github.io/direct_visual_lidar_calibration/calibration/)
+
 ## License
 
 This package is released under the MIT license.

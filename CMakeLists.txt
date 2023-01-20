@@ -12,6 +12,7 @@ endif()
 if($ENV{ROS_VERSION} EQUAL 1)
   # ROS1
   find_package(catkin REQUIRED COMPONENTS rosbag sensor_msgs cv_bridge)
+  catkin_package()
 else()
   # ROS2
   find_package(ament_cmake_auto REQUIRED)
@@ -163,7 +164,6 @@ install(
 
 if($ENV{ROS_VERSION} EQUAL 1)
   # ROS1
-  catkin_package()
 else()
   # ROS2
   ament_python_install_package(${PROJECT_NAME})

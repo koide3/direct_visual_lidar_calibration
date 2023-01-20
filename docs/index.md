@@ -12,7 +12,7 @@ This package provides a toolbox for LiDAR-Camera calibration that is:
 
 ## Getting started
 
-1. [Installation](installation.md)
+1. [Installation](installation.md) / [Docker images](docker.md)
 2. [Data collection](collection.md)
 3. [Calibration](calibration.md)
 
