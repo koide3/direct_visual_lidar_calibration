@@ -17,10 +17,10 @@ docker pull koide3/direct_visual_lidar_calibration:humble
 ```bash
 docker run \
   --rm \
-  -v /path/to/input/bags:/tmp/bags \
+  -v /path/to/input/bags:/tmp/input_bags \
   -v /path/to/save/result:/tmp/preprocessed \
   koide3/direct_visual_lidar_calibration:humble \
-  ros2 run direct_visual_lidar_calibration preprocess -a /tmp/bags /tmp/preprocessed
+  ros2 run direct_visual_lidar_calibration preprocess -a /tmp/input_bags /tmp/preprocessed
 ```
 
 **Example2**: Run preprocessing with GUI
@@ -30,9 +30,9 @@ docker run \
   --gpus all \
   -e DISPLAY=$DISPLAY \
   -v $HOME/.Xauthority:/root/.Xauthority \
-  -v /path/to/input/bags:/tmp/bags \
+  -v /path/to/input/bags:/tmp/input_bags \
   -v /path/to/save/result:/tmp/preprocessed \
   koide3/direct_visual_lidar_calibration:humble \
-  ros2 run direct_visual_lidar_calibration preprocess -a -v /tmp/bags /tmp/preprocessed
+  ros2 run direct_visual_lidar_calibration preprocess -a -v /tmp/input_bags /tmp/preprocessed
 ```
 

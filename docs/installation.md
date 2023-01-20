@@ -41,7 +41,7 @@ sudo make install
 ## Install SuperGlue (Optional)
 
 !!!warning
-    [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork.git) is not allowed to be used for commercial purposes. You must carefully check and follow its licensing conditions!!
+    [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork.git) is not allowed to be used for commercial purposes. You must carefully check and follow its licensing conditions.
 
 ```bash
 pip3 install numpy opencv-python torch matplotlib

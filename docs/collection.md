@@ -2,11 +2,11 @@
 
 - Keep the sensor at rest and start rosbag recording.
 - **[For a non-repetitive scan LiDAR]** Wait for 10 ~ 15 sec without moving the sensor.
-- **[For a spinning LiDAR]** Move the sensor up and down slowly for 5 sec. If your LiDAR has fewer scan lines, keep moving it for a bit longer (e.g., 10 ~ 15 sec).
+- **[For a spinning LiDAR]** Move the sensor up and down slowly for 5 sec. If your LiDAR has fewer scan lines (e.g., 16 or 32 lines), keep moving it for a bit longer (e.g., 10 ~ 15 sec).
 - Stop recording.
 
 !!!note
-    While the calibration can be done with only one rosbag, we recommend taking several (5 ~ 10) rosbags for better accuracy.
+    While the calibration can be performed with only one rosbag at minimum, we recommend taking several (5 ~ 10) rosbags for better calibration results.
 
 ## Keep in mind
 
