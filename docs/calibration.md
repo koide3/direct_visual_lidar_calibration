@@ -34,10 +34,10 @@ ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhol
 ```
 
 !!!note
-    Automatic topic selection requires rosbags to NOT contain multiple image/camera_info/points topics.
+    Automatic topic selection requires each rosbag to contain single image/camera_info/points topics.
 
 !!!note
-    ```distortion_model``` of camera info msg must be ```plumb_bob``` or ```fisheye```. For other distortion models, specify the camera name and parameters manually as in Example2.
+    ```distortion_model``` of the camera_info msg must be ```plumb_bob``` or ```fisheye```. For other distortion models, specify the camera model name and parameters manually as in Example2.
 
 
 ***Example2***: Manually specify image/points topics and camera parameters
@@ -80,7 +80,7 @@ ros2 run direct_visual_lidar_calibration initial_guess_auto preprocessed_data_pa
 ```
 
 !!!note
-    SuperGlue requires the upward directions of camera and LiDAR images are roughly aligned. Use ```--rotate_camera``` and ```--rotate_lidar``` options to ensure this. (e.g., ```--rotate_camera 90```. Only 90, 180, and 270 are allowed.)
+    SuperGlue requires the upward directions of camera and LiDAR images are roughly aligned. Use ```--rotate_camera``` and ```--rotate_lidar``` options to ensure this. (e.g., ```--rotate_camera 90```. Only 90, 180, and 270 degree rotations are allowed.)
 
 !!!note
     You can find ```*_superglue.png``` saved in the data directory that represents detected 2D-3D correspondences.
@@ -176,6 +176,8 @@ Once the calibration is completed, open ```calib.json``` in the data directory w
 
 </details>
 
+!!!note
+    If you need the transformation in another form (e.g., 4x4 matrix), use the [Matrix converter](https://staff.aist.go.jp/k.koide/workspace/matrix_converter/matrix_converter.html).
 
 ## 4. Result inspection
 
