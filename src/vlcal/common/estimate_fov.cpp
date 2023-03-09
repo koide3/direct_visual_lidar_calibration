@@ -10,6 +10,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/surface/convex_hull.h>
+#include <pcl/filters/voxel_grid.h>
 
 namespace vlcal {
 
@@ -48,13 +49,20 @@ double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, cons
   return max_fov;
 }
 
-double estimate_lidar_fov(const Frame::ConstPtr& points_) {
-  auto points = voxelgrid_sampling(points_, 0.2);
-  points = filter(points, [](const Eigen::Vector4d& p) { return p.head<3>().norm() > 1.0; });
-
+double estimate_lidar_fov(const Frame::ConstPtr& points) {
   auto cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   cloud->resize(points->size());
   std::transform(points->points, points->points + points->size(), cloud->begin(), [](const auto& p) { return pcl::PointXYZ(p.x(), p.y(), p.z()); });
+
+  auto filtered = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  pcl::VoxelGrid<pcl::PointXYZ> voxelgrid;
+  voxelgrid.setLeafSize(0.2f, 0.2f, 0.2f);
+  voxelgrid.setInputCloud(cloud);
+  voxelgrid.filter(*filtered);
+
+  const auto remove_loc = std::remove_if(filtered->begin(), filtered->end(), [](const pcl::PointXYZ& pt) { return pt.getVector3fMap().norm() < 1.0; });
+  filtered->erase(remove_loc, filtered->end());
+  cloud = filtered;
 
   // convexhull
   pcl::ConvexHull<pcl::PointXYZ> convexhull;

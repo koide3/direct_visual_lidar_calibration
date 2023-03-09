@@ -2,7 +2,7 @@ FROM koide3/gtsam_docker:humble
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-    libgoogle-glog-dev libgflags-dev libatlas-base-dev libsuitesparse-dev \
+  libomp-dev libgoogle-glog-dev libgflags-dev libatlas-base-dev libsuitesparse-dev \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 

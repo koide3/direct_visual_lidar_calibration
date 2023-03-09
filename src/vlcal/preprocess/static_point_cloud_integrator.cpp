@@ -13,7 +13,12 @@ StaticPointCloudIntegratorParams::StaticPointCloudIntegratorParams() {
 
 StaticPointCloudIntegratorParams::~StaticPointCloudIntegratorParams() {}
 
-StaticPointCloudIntegrator::StaticPointCloudIntegrator(const StaticPointCloudIntegratorParams& params) : params(params) {}
+StaticPointCloudIntegrator::StaticPointCloudIntegrator(const StaticPointCloudIntegratorParams& params) : params(params) {
+  if (params.visualize) {
+    auto viewer = guik::LightViewer::instance();
+    viewer->clear_drawables();
+  }
+}
 
 StaticPointCloudIntegrator::~StaticPointCloudIntegrator() {}
 
