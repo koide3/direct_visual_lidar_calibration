@@ -44,4 +44,5 @@ nav:
     - 'installation.md'
     - 'docker.md'
     - 'collection.md'
-    - 'calibration.md'
+    - 'example.md'
+    - 'programs.md'

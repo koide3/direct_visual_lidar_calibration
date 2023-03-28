@@ -2,19 +2,24 @@
 
 ## Prerequisite
 
-- The intrinsic parameters of the camera needs to be calibrated.
+- The intrinsic parameters of the camera (i.e., camera matrix and distortion coefficients) need to be calibrated.
 - The camera and LiDAR are rigidly fixed.
 
 
 ## Data collection steps
 
-- Keep the sensor at rest and start recording Image and PointCloud2 messages. It is a good idea to record CameraInfo as well if it is available.
+- Keep the sensor at rest and start recording sensor_msgs::Image and sensor_msgs::PointCloud2 messages. We recommend recording sensor_msgs::CameraInfo as well if it is available.
 - **[For a non-repetitive scan LiDAR]** Wait for 10 ~ 15 sec without moving the sensor.
-- **[For a spinning LiDAR]** Move the sensor up and down slowly for 5 sec. If your LiDAR has fewer scan lines (e.g., 16 or 32 lines), keep moving it a bit longer (e.g., 10 ~ 15 sec).
+- **[For a spinning LiDAR]** Move the sensor up and down slowly for 10 sec. If your LiDAR has fewer scan lines (e.g., 16 or 32 lines), keep moving it a bit longer (e.g., 20 ~ 30 sec).
 - Stop recording.
 
 !!!note
     While the calibration can be performed with only one rosbag at a minimum, we recommend taking several (5 ~ 10) rosbags for better calibration results.
+
+Data acquisition example for an Ouster OS1-128:
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Urs36qdSQm0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+</div>
 
 ## Keep in mind
 

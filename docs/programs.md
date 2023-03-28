@@ -1,13 +1,11 @@
-# Calibration
+# Program details
 
 ![Screenshot_20230119_173747](https://user-images.githubusercontent.com/31344317/213393928-c640e0d8-076a-4272-90b3-c67dfab02358.png){: style="height:75%;width:75%"}
-
-**Example data: ~~ouster_pinhole.tar.gz~~ (will be available soon)**
 
 ## 1. Preprocessing
 
 ```bash
-ros2 run direct_visual_lidar_calibration preprocess data_path dst_path
+$ ros2 run direct_visual_lidar_calibration preprocess data_path dst_path
 ```
 
 | Option                             | Description                                                                     |
@@ -30,7 +28,7 @@ ros2 run direct_visual_lidar_calibration preprocess data_path dst_path
 # -a = Automatic topic selection
 # -d = Dynamic points integration
 # -v = Visualization
-ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhole_preprocessed -a -d -v
+$ ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhole_preprocessed -a -d -v
 ```
 
 !!!note
@@ -42,7 +40,7 @@ ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhol
 
 ***Example2***: Manually specify image/points topics and camera parameters
 ```
-ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhole_preprocessed \
+$ ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhole_preprocessed \
   --image_topic /camera/image \
   --points_topic /os_cloud_node/points \
   --camera_model plumb_bob \
@@ -55,7 +53,7 @@ ros2 run direct_visual_lidar_calibration preprocess ouster_pinhole ouster_pinhol
 ### Option1: Manual estimation
 
 ```bash
-ros2 run direct_visual_lidar_calibration initial_guess_manual preprocessed_data_path
+$ ros2 run direct_visual_lidar_calibration initial_guess_manual preprocessed_data_path
 ```
 
 1. Right click a 3D point on the point cloud and a corresponding 2D point on the image
@@ -75,8 +73,8 @@ ros2 run direct_visual_lidar_calibration initial_guess_manual preprocessed_data_
     SuperGlue is not allowed to be used for commercial purposes!!
 
 ```bash
-ros2 run direct_visual_lidar_calibration find_matches_superglue.py preprocessed_data_path
-ros2 run direct_visual_lidar_calibration initial_guess_auto preprocessed_data_path
+$ ros2 run direct_visual_lidar_calibration find_matches_superglue.py preprocessed_data_path
+$ ros2 run direct_visual_lidar_calibration initial_guess_auto preprocessed_data_path
 ```
 
 !!!note
@@ -91,7 +89,7 @@ ros2 run direct_visual_lidar_calibration initial_guess_auto preprocessed_data_pa
 ## 3. Calibration
 
 ```bash
-ros2 run direct_visual_lidar_calibration calibrate preprocessed_data_path
+$ ros2 run direct_visual_lidar_calibration calibrate preprocessed_data_path
 ```
 
 | Option                                              | Description                                                                     |
@@ -176,12 +174,12 @@ Once the calibration is completed, open ```calib.json``` in the data directory w
 
 </details>
 
-!!!note
+!!!tip
     If you need the transformation in another form (e.g., 4x4 matrix), use the [Matrix converter](https://staff.aist.go.jp/k.koide/workspace/matrix_converter/matrix_converter.html).
 
 ## 4. Result inspection
 
 ```bash
-ros2 run direct_visual_lidar_calibration viewer preprocessed_data_path
+$ ros2 run direct_visual_lidar_calibration viewer preprocessed_data_path
 ```
 ![Screenshot_20230119_173547](https://user-images.githubusercontent.com/31344317/213393507-efe30dce-097f-4b65-b91f-56336454991d.png)
