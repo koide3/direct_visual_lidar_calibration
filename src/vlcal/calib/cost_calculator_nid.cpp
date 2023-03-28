@@ -14,7 +14,7 @@ CostCalculatorNID::CostCalculatorNID(const camera::GenericCameraBase::ConstPtr& 
 : params(params),
   proj(proj),
   data(data),
-  max_fov( estimate_camera_fov(proj, {data->image.cols, data->image.rows})) {}
+  max_fov(estimate_camera_fov(proj, {data->image.cols, data->image.rows})) {}
 
 CostCalculatorNID::~CostCalculatorNID() {}
 

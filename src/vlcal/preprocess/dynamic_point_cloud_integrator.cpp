@@ -88,12 +88,12 @@ void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_point
   graph.add(factor);
 
   graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose3>>(0, gtsam::Pose3(pred_T_odom_lidar_begin), gtsam::noiseModel::Isotropic::Precision(6, 1e3));
-  graph.emplace_shared<gtsam::BetweenFactor<gtsam::Pose3>>(0, 1, gtsam::Pose3(), gtsam::noiseModel::Isotropic::Precision(6, 1e1));
+  graph.emplace_shared<gtsam::BetweenFactor<gtsam::Pose3>>(0, 1, gtsam::Pose3(), gtsam::noiseModel::Isotropic::Precision(6, 1e5));
 
   gtsam::LevenbergMarquardtParams lm_params;
-  lm_params.setMaxIterations(15);
+  lm_params.setMaxIterations(10);
 
-  for (int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     values = gtsam::LevenbergMarquardtOptimizer(graph, values, lm_params).optimize();
   }
 

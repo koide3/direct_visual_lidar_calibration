@@ -400,7 +400,11 @@ std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
     if (!raw_points) {
       break;
     }
-    time_keeper.process(raw_points);
+
+    if (!time_keeper.process(raw_points)) {
+      std::cerr << vlcal::console::yellow << "warning: skip frame with an invalid timestamp!!" << vlcal::console::reset << std::endl;
+      continue;
+    }
 
     auto points = std::make_shared<FrameCPU>(raw_points->points);
     points->add_times(raw_points->times);

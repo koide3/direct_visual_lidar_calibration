@@ -41,7 +41,7 @@ bool TimeKeeper::validate_imu_stamp(const double imu_stamp) {
   return true;
 }
 
-void TimeKeeper::process(const vlcal::RawPoints::Ptr& points) {
+bool TimeKeeper::process(const vlcal::RawPoints::Ptr& points) {
   replace_points_stamp(points);
 
   const double time_diff = points->stamp - last_points_stamp;
@@ -50,12 +50,15 @@ void TimeKeeper::process(const vlcal::RawPoints::Ptr& points) {
   } else if (time_diff < 0.0) {
     std::cerr << console::yellow << "warning: point timestamp rewind detected!!" << console::reset << std::endl;
     std::cerr << console::yellow << boost::format("       : current:%.6f last:%.6f diff:%.6f") % points->stamp % last_points_stamp % time_diff << console::reset << std::endl;
+    return false;
   } else if (time_diff > 0.5) {
     std::cerr << console::yellow << "warning: large time gap between consecutive LiDAR frames!!" << console::reset << std::endl;
     std::cerr << console::yellow << boost::format("       : current:%.6f last:%.6f diff:%.6f") % points->stamp % last_points_stamp % time_diff << console::reset << std::endl;
   }
 
   last_points_stamp = points->stamp;
+
+  return true;
 }
 
 void TimeKeeper::replace_points_stamp(const vlcal::RawPoints::Ptr& points) {

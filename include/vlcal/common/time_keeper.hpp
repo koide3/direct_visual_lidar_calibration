@@ -31,8 +31,9 @@ public:
    * @brief Replace frame and point timestamps
    * @note  Frame timestamp must be the one at the moment when the first point is acquired
    * @note  Point timestamps must be relative with respect to the first point
+   * @return Return false if the timestamp is invalid and the frame should be skipped
    */
-  void process(const vlcal::RawPoints::Ptr& points);
+  bool process(const vlcal::RawPoints::Ptr& points);
 
   /**
    * @brief Check if IMU and LiDAR data are (very roughly) synchronized

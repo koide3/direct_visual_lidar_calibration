@@ -8,7 +8,7 @@ namespace vlcal {
 
 PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image)
 : proj(proj),
-  min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows}) + 3.0 * M_PI / 180.0)),
+  min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows}) + 0.5 * M_PI / 180.0)),
   image(image) {
   glk::Icosahedron icosahedron;
   for (int i = 0; i < 6; i++) {
@@ -24,11 +24,10 @@ PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr
 
 PointsColorUpdater::PointsColorUpdater(const camera::GenericCameraBase::ConstPtr& proj, const cv::Mat& image, const FrameCPU::ConstPtr& points)
 : proj(proj),
-  min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows})  + 3.0 * M_PI / 180.0)),
+  min_nz(std::cos(estimate_camera_fov(proj, {image.cols, image.rows}) + 0.5 * M_PI / 180.0)),
   image(image),
   points(points) {
   cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points->points, points->size());
-
   intensity_colors.resize(points->size());
   for (int i = 0; i < points->size(); i++) {
     intensity_colors[i] = glk::colormapf(glk::COLORMAP::TURBO, points->intensities[i]);
