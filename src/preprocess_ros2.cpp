@@ -59,7 +59,9 @@ protected:
     reader.set_filter(filter);
 
     if (!reader.has_next()) {
-      std::cerr << "error: bag does not contain topic " << topic << std::endl;
+      std::cerr << "error: bag does not contain topic " << std::endl;
+      std::cerr << "     : bag_filename=" << bag_filename << std::endl;
+      std::cerr << "     : topic=" << topic << std::endl;
       abort();
     }
 

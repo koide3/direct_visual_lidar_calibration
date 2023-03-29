@@ -1,9 +1,9 @@
 FROM koide3/gtsam_docker:humble
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
+RUN apt-fast update \
+  && apt-fast install -y --no-install-recommends \
   libomp-dev libgoogle-glog-dev libgflags-dev libatlas-base-dev libsuitesparse-dev \
-  && apt-get clean \
+  && apt-fast clean \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root
@@ -19,10 +19,12 @@ COPY . /root/ros2_ws/src/direct_visual_lidar_calibration
 
 WORKDIR /root/ros2_ws
 
-RUN apt-get update \
-  && /bin/bash -c ". /opt/ros/humble/setup.bash; rosdep install -y --from-paths src" \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt-fast update && \
+  rosdep install -i --from-paths src --simulate | \
+  sed '1d' | sed 's/apt-get install//' | sed 's/ //g' > /tmp/depends && \
+  xargs apt-fast install --no-install-recommends -y < /tmp/depends && \
+  apt-fast clean && \
+  rm -rf /var/lib/apt/lists/*
 
 RUN /bin/bash -c ". /opt/ros/humble/setup.bash; colcon build"
 

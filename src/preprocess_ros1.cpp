@@ -33,6 +33,7 @@ public:
       return nullptr;
     }
 
+    msg_itr++;
     return extract_raw_points(points_msg, intensity_channel);
   }
 
@@ -59,7 +60,9 @@ protected:
       }
     }
 
-    std::cerr << "error: bag does not contain topic " << topic << std::endl;
+    std::cerr << "error: bag does not contain topic" << std::endl;
+    std::cerr << "     : bag_filename=" << bag_filename << std::endl;
+    std::cerr << "     : topic=" << topic << std::endl;
     abort();
     return nullptr;
   }

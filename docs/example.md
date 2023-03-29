@@ -1,10 +1,22 @@
-# Testing on example data
+# Calibration example
+
+## Dataset
+
+[LiDAR-camera calibration dataset (Zenodo)](https://zenodo.org/record/7779880)
+
+- [livox.tar.gz (ROS2)](https://zenodo.org/record/7779880/files/livox.tar.gz?download=1)
+- [ouster.tar.gz (ROS2)](https://zenodo.org/record/7779880/files/ouster.tar.gz?download=1)
+- [livox_ros1.tar.gz (ROS1)](https://zenodo.org/record/7779880/files/livox_ros1.tar.gz?download=1)
+- [ouster_ros1.tar.gz (ROS1)](https://zenodo.org/record/7779880/files/ouster_ros1.tar.gz?download=1)
+
+!!!note
+    CameraInfo messages in ROS1 bag files exhibit an MD5 checksum that is different from that of the standard sensor_msgs/CameraInfo msg due to ROS2-ROS1 bag conversion issues. Because this affects the automatic camera info extraction, you need to manually specify camera parameters for preprocessing.
 
 ## Livox-camera calibration
 
 ### 1. Download dataset
 
-Download [livox.tar.gz](https://zenodo.org/record/7777354/files/livox.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7777354) and unzip it:
+Download [livox.tar.gz](https://zenodo.org/record/7777354/files/livox.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7779880) and unzip it:
 ```bash
 $ tar xzvf livox.tar.gz
 ```
@@ -179,7 +191,7 @@ Once the calibration is completed, open ```livox_preprocessed/calib.json``` with
 
 ### 1. Download dataset
 
-Download [ouster.tar.gz](https://zenodo.org/record/7777354/files/ouster.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7777354) and unzip it:
+Download [ouster.tar.gz](https://zenodo.org/record/7777354/files/ouster.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7779880) and unzip it:
 ```bash
 $ tar xzvf ouster.tar.gz
 ```

@@ -1,8 +1,8 @@
 name: Build
 
 on:
-  pull_request:
-    branches: [ master, devel ]
+  push:
+    branches: [ master ]
     paths-ignore: '**.md'
 
   # Allows you to run this workflow manually from the Actions tab
@@ -33,4 +33,4 @@ jobs:
           file: ${{github.workspace}}/docker/${{ matrix.ROS_DISTRO }}/Dockerfile
           context: .
           tags: ${{secrets.DOCKER_USERNAME}}/direct_visual_lidar_calibration:${{ matrix.ROS_DISTRO }}
-          push: false
+          push: true
