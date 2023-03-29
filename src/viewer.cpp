@@ -24,6 +24,20 @@ public:
     ifs >> config;
 
     auto viewer = guik::LightViewer::instance();
+    viewer->invoke([] {
+      ImGui::SetNextWindowPos({55, 60}, ImGuiCond_Once);
+      ImGui::Begin("visualizer");
+      ImGui::End();
+      ImGui::SetNextWindowPos({55, 150}, ImGuiCond_Once);
+      ImGui::Begin("data selection");
+      ImGui::End();
+      ImGui::SetNextWindowPos({55, 300}, ImGuiCond_Once);
+      ImGui::Begin("texts");
+      ImGui::End();
+      ImGui::SetNextWindowPos({1260, 60}, ImGuiCond_Once);
+      ImGui::Begin("images");
+      ImGui::End();
+    });
 
     const auto tum2pose = [](const std::vector<double>& values) {
       Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
@@ -59,7 +73,7 @@ public:
       std::cout << "--- T_lidar_camera ---" << std::endl << T_lidar_camera.back().matrix() << std::endl;
     }
 
-    if(T_labels.empty()) {
+    if (T_labels.empty()) {
       viewer->append_text("error: no transformation found in calib.json!!");
       std::cerr << vlcal::console::bold_red << "error: no transformation found in calib.json!!" << vlcal::console::reset << std::endl;
       T_labels.emplace_back("NONE");

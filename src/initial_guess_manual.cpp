@@ -70,7 +70,6 @@ public:
   std::vector<std::pair<Eigen::Vector2d, Eigen::Vector4d>> correspondences;
 };
 
-
 class InitialGuessManual {
 public:
   InitialGuessManual(const std::string& data_path) : data_path(data_path) {
@@ -96,7 +95,22 @@ public:
     std::cout << "camera_fov:" << estimate_camera_fov(proj, {image_size.width, image_size.height}) * 180.0 / M_PI << "[deg]" << std::endl;
 
     vis.reset(new VisualLiDARVisualizer(proj, dataset, true, true));
+    vis->set_blend_weight(0.1f);
+
     picking.reset(new PickingPoseEstimation(proj));
+
+    auto viewer = guik::LightViewer::instance();
+    viewer->invoke([] {
+      ImGui::SetNextWindowPos({55, 300}, ImGuiCond_Once);
+      ImGui::Begin("texts");
+      ImGui::End();
+      ImGui::SetNextWindowPos({55, 60}, ImGuiCond_Once);
+      ImGui::Begin("visualizer");
+      ImGui::End();
+      ImGui::SetNextWindowPos({55, 150}, ImGuiCond_Once);
+      ImGui::Begin("control");
+      ImGui::End();
+    });
 
     cv::namedWindow("image");
     cv::setMouseCallback("image", &InitialGuessManual::mouse_callback, this);
@@ -108,7 +122,7 @@ public:
     if (camera_model != "equirectangular") {
       init_T_lidar_camera.linear() = (Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitZ())).toRotationMatrix();
     } else {
-      init_T_lidar_camera.linear() = (Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitX()) ).toRotationMatrix();
+      init_T_lidar_camera.linear() = (Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitX())).toRotationMatrix();
     }
 
     auto viewer = guik::LightViewer::instance();
@@ -122,7 +136,8 @@ public:
           picking->pick_point_3d(Eigen::Vector4d(pt_3d.x(), pt_3d.y(), pt_3d.z(), 1.0));
 
           guik::HoveredDrawings hovered;
-          hovered.add_cross(pt_3d, IM_COL32(0, 255, 0, 255));
+          hovered.add_cross(pt_3d, IM_COL32(64, 64, 64, 255), 15.0f, 4.0f);
+          hovered.add_cross(pt_3d, IM_COL32(0, 255, 0, 255), 15.0f, 3.0f);
           viewer->register_ui_callback("hovered", hovered.create_callback());
         }
       }
@@ -181,13 +196,20 @@ public:
       return;
     }
 
-    cv::Mat canvas;
-    cv::cvtColor(dataset[vis->get_selected_bag_id()]->image, canvas, cv::COLOR_GRAY2BGR);
-    cv::line(canvas, {x - 10, y - 10}, {x + 10, y + 10}, cv::Scalar(0, 255, 0));
-    cv::line(canvas, {x + 10, y - 10}, {x - 10, y + 10}, cv::Scalar(0, 255, 0));
+    const double scale = vis->get_image_display_scale();
+
+    cv::Mat resized, canvas;
+    cv::resize(dataset[vis->get_selected_bag_id()]->image, resized, cv::Size(), scale, scale);
+    cv::cvtColor(resized, canvas, cv::COLOR_GRAY2BGR);
+
+    const int cross_size = 15;
+    cv::line(canvas, {x - cross_size, y - cross_size}, {x + cross_size, y + cross_size}, cv::Scalar(64, 64, 64), 4, cv::LINE_AA);
+    cv::line(canvas, {x + cross_size, y - cross_size}, {x - cross_size, y + cross_size}, cv::Scalar(64, 64, 64), 4, cv::LINE_AA);
+    cv::line(canvas, {x - cross_size, y - cross_size}, {x + cross_size, y + cross_size}, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
+    cv::line(canvas, {x + cross_size, y - cross_size}, {x - cross_size, y + cross_size}, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
     cv::imshow("image", canvas);
 
-    picking->pick_point_2d({x, y});
+    picking->pick_point_2d({x / scale, y / scale});
   }
 
   static void mouse_callback(int event, int x, int y, int flags, void* userdata) {

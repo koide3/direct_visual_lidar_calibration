@@ -22,12 +22,18 @@ public:
    * @param draw_sphere   If true, draw unit sphere as a projection screen in addition to LiDAR points
    * @param show_image_cv If ture, do cv::imshow in addition to LiDAR points rendering
    */
-  VisualLiDARVisualizer(const camera::GenericCameraBase::ConstPtr& proj, const std::vector<VisualLiDARData::ConstPtr>& dataset, const bool draw_sphere, const bool show_image_cv = false);
+  VisualLiDARVisualizer(
+    const camera::GenericCameraBase::ConstPtr& proj,
+    const std::vector<VisualLiDARData::ConstPtr>& dataset,
+    const bool draw_sphere,
+    const bool show_image_cv = false);
   ~VisualLiDARVisualizer();
 
+  void set_blend_weight(float weight) { blend_weight = weight; }
   void set_T_camera_lidar(const Eigen::Isometry3d& T_camera_lidar);
 
   int get_selected_bag_id() const { return selected_bag_id; }
+  double get_image_display_scale() const { return image_display_scale; }
 
   bool spin_once();
 
@@ -42,6 +48,7 @@ private:
   const camera::GenericCameraBase::ConstPtr proj;
   const std::vector<VisualLiDARData::ConstPtr> dataset;
 
+  double image_display_scale;
   Eigen::Isometry3d T_camera_lidar;
 
   int selected_bag_id;

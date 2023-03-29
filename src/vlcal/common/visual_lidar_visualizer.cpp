@@ -21,6 +21,8 @@ VisualLiDARVisualizer::VisualLiDARVisualizer(
   viewer->set_draw_xy_grid(false);
   viewer->use_arcball_camera_control();
 
+  image_display_scale = std::min(1920.0 / dataset[0]->image.cols, 1080.0 / dataset[0]->image.rows);
+
   selected_bag_id = -1;
   blend_weight = 0.7f;
   viewer->register_ui_callback("ui", [this] { ui_callback(); });
@@ -60,8 +62,10 @@ void VisualLiDARVisualizer::ui_callback() {
       viewer->update_drawable("sphere", sphere_updater->cloud_buffer, guik::VertexColor());
     }
 
-    if(show_image_cv) {
-      cv::imshow("image", dataset[selected_bag_id]->image);
+    if (show_image_cv) {
+      cv::Mat canvas;
+      cv::resize(dataset[selected_bag_id]->image, canvas, cv::Size(), image_display_scale, image_display_scale);
+      cv::imshow("image", canvas);
     } else {
       cv::Mat bgr;
       cv::cvtColor(dataset[selected_bag_id]->image, bgr, cv::COLOR_GRAY2BGR);

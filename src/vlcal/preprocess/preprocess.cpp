@@ -229,6 +229,15 @@ bool Preprocess::run(int argc, char** argv) {
     viewer->clear();
     viewer->use_arcball_camera_control();
 
+    viewer->invoke([] {
+      ImGui::SetNextWindowPos({1260, 60}, ImGuiCond_Once);
+      ImGui::Begin("images");
+      ImGui::End();
+      ImGui::SetNextWindowPos({55, 300}, ImGuiCond_Once);
+      ImGui::Begin("texts");
+      ImGui::End();
+    });
+
     for (const auto& bag_filename : bag_filenames) {
       const std::string bag_name = std::filesystem::path(bag_filename).filename();
       const cv::Mat image = cv::imread(dst_path + "/" + bag_name + ".png");

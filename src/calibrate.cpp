@@ -79,6 +79,18 @@ public:
     viewer->set_draw_xy_grid(false);
     viewer->use_arcball_camera_control();
 
+    viewer->invoke([] {
+      ImGui::SetNextWindowPos({55, 300}, ImGuiCond_Once);
+      ImGui::Begin("texts");
+      ImGui::End();
+      ImGui::SetNextWindowPos({55, 60}, ImGuiCond_Once);
+      ImGui::Begin("visualizer");
+      ImGui::End();
+      ImGui::SetNextWindowPos({1260, 60}, ImGuiCond_Once);
+      ImGui::Begin("images");
+      ImGui::End();
+    });
+
     VisualLiDARVisualizer vis(proj, dataset, false);
     vis.set_T_camera_lidar(init_T_camera_lidar);
 
@@ -89,7 +101,7 @@ public:
     params.nelder_mead_convergence_criteria = vm["nelder_mead_convergence_criteria"].as<double>();
 
     const std::string registration_type = vm["registration_type"].as<std::string>();
-    if(registration_type == "nid_bfgs") {
+    if (registration_type == "nid_bfgs") {
       params.registration_type = RegistrationType::NID_BFGS;
     } else if (registration_type == "nid_nelder_mead") {
       params.registration_type = RegistrationType::NID_NELDER_MEAD;
