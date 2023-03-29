@@ -17,6 +17,8 @@ This package provides a toolbox for LiDAR-camera calibration that is:
 
 ![213393920-501f754f-c19f-4bab-af82-76a70d2ec6c6](https://user-images.githubusercontent.com/31344317/213427328-ddf72a71-9aeb-42e8-86a5-9c2ae19890e3.jpg)
 
+[Video](https://www.youtube.com/watch?v=7TM7wGthinc&feature=youtu.be)
+
 ## Dependencies
 
 - [ROS1/ROS2](https://www.ros.org/)
@@ -31,7 +33,8 @@ This package provides a toolbox for LiDAR-camera calibration that is:
 
 1. [Installation](https://koide3.github.io/direct_visual_lidar_calibration/installation/) / [Docker images](https://koide3.github.io/direct_visual_lidar_calibration/docker/)
 2. [Data collection](https://koide3.github.io/direct_visual_lidar_calibration/collection/)
-3. [Calibration](https://koide3.github.io/direct_visual_lidar_calibration/calibration/)
+3. [Calibration example](https://koide3.github.io/direct_visual_lidar_calibration/example/)
+4. [Program details](https://koide3.github.io/direct_visual_lidar_calibration/programs/)
 
 ## License
 

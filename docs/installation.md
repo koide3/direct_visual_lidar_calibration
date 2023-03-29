@@ -1,7 +1,7 @@
 # Installation
 
 !!!note
-    We provide docker images so the user can do calibration without installation: [Docker images](docker.md)
+    We provide docker images so that the user can do calibration without installation: [Docker images](docker.md)
 
 ## Dependencies
 
@@ -20,8 +20,16 @@
 sudo apt install libomp-dev libboost-all-dev libglm-dev libglfw3-dev libpng-dev libjpeg-dev
 
 # Install GTSAM
-sudo add-apt-repository ppa:borglab/gtsam-develop
-sudo apt install libgtsam-dev libgtsam-unstable-dev
+git clone https://github.com/borglab/gtsam
+cd gtsam && git checkout 4.2a9
+mkdir build && cd build
+# For Ubuntu 22.04, add -DGTSAM_USE_SYSTEM_EIGEN=ON
+cmake .. -DGTSAM_BUILD_EXAMPLES_ALWAYS=OFF \
+         -DGTSAM_BUILD_TESTS=OFF \
+         -DGTSAM_WITH_TBB=OFF \
+         -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF
+make -j$(nproc)
+sudo make install
 
 # Install Ceres
 git clone https://github.com/ceres-solver/ceres-solver
@@ -51,7 +59,7 @@ echo 'export PYTHONPATH=$PYTHONPATH:/path/to/SuperGluePretrainedNetwork' >> ~/.b
 source ~/.bashrc
 ```
 
-## Build the calibration toolbox
+## Build direct_visual_lidar_calibration
 
 ```bash
 # ROS1

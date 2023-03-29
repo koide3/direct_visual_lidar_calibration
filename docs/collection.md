@@ -2,15 +2,15 @@
 
 ## Prerequisite
 
-- The intrinsic parameters of the camera (i.e., camera matrix and distortion coefficients) need to be calibrated.
-- The camera and LiDAR are rigidly fixed.
+- The intrinsic parameters of the camera (i.e., camera matrix and distortion coefficients) need to be calibrated beforehand.
+- The camera and LiDAR must be rigidly fixed.
 
 
 ## Data collection steps
 
-- Keep the sensor at rest and start recording sensor_msgs::Image and sensor_msgs::PointCloud2 messages. We recommend recording sensor_msgs::CameraInfo as well if it is available.
-- **[For a non-repetitive scan LiDAR]** Wait for 10 ~ 15 sec without moving the sensor.
-- **[For a spinning LiDAR]** Move the sensor up and down slowly for 10 sec. If your LiDAR has fewer scan lines (e.g., 16 or 32 lines), keep moving it a bit longer (e.g., 20 ~ 30 sec).
+- Keep the sensor at rest and start recording ```Image``` and ```PointCloud2``` messages. We recommend recording ```CameraInfo``` as well if it is available.
+- **[For a non-repetitive scan LiDAR (Livox)]** Wait for 10 ~ 15 sec without moving the sensor.
+- **[For a spinning LiDAR (Ouster)]** Move the sensor up and down slowly for 10 sec. If your LiDAR has fewer scan lines (e.g., 16 or 32 lines), keep moving it a bit longer (e.g., 20 ~ 30 sec).
 - Stop recording.
 
 !!!note
