@@ -2,7 +2,7 @@ name: Build
 
 on:
   pull_request:
-    branches: [ master, devel ]
+    branches: [ main ]
     paths-ignore: '**.md'
 
   # Allows you to run this workflow manually from the Actions tab
