@@ -21,7 +21,6 @@ jobs:
           submodules: recursive
 
       - name: Docker login
-        continue-on-error: true
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
