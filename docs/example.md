@@ -2,7 +2,7 @@
 
 ## Dataset
 
-[LiDAR-camera calibration dataset (Zenodo)](https://zenodo.org/record/7779880)
+[LiDAR-camera calibration dataset (Zenodo)](https://zenodo.org/record/7780490)
 
 - [livox.tar.gz (ROS2)](https://zenodo.org/record/7779880/files/livox.tar.gz?download=1)
 - [ouster.tar.gz (ROS2)](https://zenodo.org/record/7779880/files/ouster.tar.gz?download=1)
@@ -16,7 +16,7 @@
 
 ### 1. Download dataset
 
-Download [livox.tar.gz](https://zenodo.org/record/7777354/files/livox.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7779880) and unzip it:
+Download [livox.tar.gz](https://zenodo.org/record/7777354/files/livox.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7780490) and unzip it:
 ```bash
 $ tar xzvf livox.tar.gz
 ```
@@ -82,6 +82,9 @@ Then, run ```initial_guess_auto``` to perform RANSAC-based initial guess estimat
 $ ros2 run direct_visual_lidar_calibration initial_guess_auto livox_preprocessed
 ```
 
+![rosbag2_2023_03_09-13_42_46_superglue](https://user-images.githubusercontent.com/31344317/228459350-d1d4c83a-53b7-409f-bddd-d548a08b3c9f.jpg)
+
+
 ### 3b. Initial guess (Manual)
 
 ```bash
@@ -114,7 +117,7 @@ $ ros2 run direct_visual_lidar_calibration calibrate livox_preprocessed
 
 ![Screenshot_20230328_182427](https://user-images.githubusercontent.com/31344317/228191764-837e5fa1-b5d1-4d62-817b-f306473554d5.png)
 
-### 6. Getting LiDAR-camera transformation
+### 6. Calibration result file
 
 Once the calibration is completed, open ```livox_preprocessed/calib.json``` with a text editor and find the calibration result ```T_lidar_camera: [x, y, z, qx, qy, qz, qw]``` that transforms a 3D point in the camera frame into the LiDAR frame (i.e., ```p_lidar = T_lidar_camera * p_camera```).
 
@@ -191,7 +194,7 @@ Once the calibration is completed, open ```livox_preprocessed/calib.json``` with
 
 ### 1. Download dataset
 
-Download [ouster.tar.gz](https://zenodo.org/record/7777354/files/ouster.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7779880) and unzip it:
+Download [ouster.tar.gz](https://zenodo.org/record/7777354/files/ouster.tar.gz?download=1) from [zenodo repository](https://zenodo.org/record/7780490) and unzip it:
 ```bash
 $ tar xzvf ouster.tar.gz
 ```

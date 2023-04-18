@@ -102,6 +102,16 @@ else()
   )
 endif()
 
+# preprocess_map
+add_executable(preprocess_map
+  src/preprocess_map.cpp
+)
+target_include_directories(preprocess_map PRIVATE
+  ${catkin_INCLUDE_DIRS}
+)
+target_link_libraries(preprocess_map
+  direct_visual_lidar_calibration
+)
 
 # initial_guess_manual
 add_executable(initial_guess_manual
@@ -154,6 +164,7 @@ install(
 
 install(
   TARGETS
+  preprocess_map
   initial_guess_manual
   initial_guess_auto
   calibrate
