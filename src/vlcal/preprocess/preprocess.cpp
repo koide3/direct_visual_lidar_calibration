@@ -123,10 +123,10 @@ bool Preprocess::run(int argc, char** argv) {
   const auto camera_info_topic = std::get<0>(topics);
   const auto image_topic = std::get<1>(topics);
   const auto points_topic = std::get<2>(topics);
-  std::cout << "topics:" << std::endl;
-  std::cout << "- camera_info:" << camera_info_topic << std::endl;
-  std::cout << "- image      :" << image_topic << std::endl;
-  std::cout << "- points     :" << points_topic << std::endl;
+  std::cout << "selected topics:" << std::endl;
+  std::cout << "- camera_info: " << camera_info_topic << std::endl;
+  std::cout << "- image      : " << image_topic << std::endl;
+  std::cout << "- points     : " << points_topic << std::endl;
 
   // intensity channel
   const std::string intensity_channel = get_intensity_channel(vm, bag_filenames.front(), points_topic);
@@ -148,6 +148,8 @@ bool Preprocess::run(int argc, char** argv) {
   // omp_set_max_active_levels(2);
   // #pragma omp parallel for
   for (int i = 0; i < bag_filenames.size(); i++) {
+    std::cout << "start processing " << bag_filenames[i] << std::endl;
+
     const auto& bag_filename = bag_filenames[i];
     auto [image, points] = get_image_and_points(vm, bag_filename, image_topic, points_topic, intensity_channel, num_threads_per_bag);
 
@@ -194,6 +196,7 @@ bool Preprocess::run(int argc, char** argv) {
 
   auto lidar_proj = camera::create_camera(lidar_camera_model, lidar_camera_intrinsics, {});
 
+  std::cout << "save LiDAR images" << std::endl;
 #pragma omp parallel for
   for (int i = 0; i < bag_filenames.size(); i++) {
     const std::string bag_name = std::filesystem::path(bag_filenames[i]).filename();
@@ -209,6 +212,8 @@ bool Preprocess::run(int argc, char** argv) {
   //
   std::vector<std::string> bag_names(bag_filenames);
   std::transform(bag_filenames.begin(), bag_filenames.end(), bag_names.begin(), [](const auto& path) { return std::filesystem::path(path).filename(); });
+
+  std::cout << "save meta data" << std::endl;
 
   nlohmann::json config;
   config["meta"]["data_path"] = data_path;
@@ -261,10 +266,12 @@ std::tuple<std::string, std::string, std::string> Preprocess::get_topics(const b
   std::string image_topic;
   std::string points_topic;
 
-  const auto topics_and_types = get_topics_and_types(bag_filename);
-
   if (vm.count("auto_topic")) {
+    const auto topics_and_types = get_topics_and_types(bag_filename);
+    std::cout << "topics in " << bag_filename << ":" << std::endl;
     for (const auto& [topic, type] : topics_and_types) {
+      std::cout << "- " << topic << " : " << type << std::endl;
+
       if (type.find("CameraInfo") != std::string::npos) {
         if (!camera_info_topic.empty()) {
           std::cerr << vlcal::console::bold_yellow << "warning: bag constains multiple camera_info topics!!" << vlcal::console::reset << std::endl;
@@ -286,12 +293,22 @@ std::tuple<std::string, std::string, std::string> Preprocess::get_topics(const b
 
   if (camera_info_topic.empty() && vm.count("camera_info_topic")) {
     camera_info_topic = vm["camera_info_topic"].as<std::string>();
-  }
+  } 
   if (image_topic.empty() && vm.count("image_topic")) {
     image_topic = vm["image_topic"].as<std::string>();
   }
   if (points_topic.empty() && vm.count("points_topic")) {
     points_topic = vm["points_topic"].as<std::string>();
+  }
+
+  if (camera_info_topic.empty()) {
+    std::cerr << console::bold_yellow << "warning: failed to get camera_info topic!!" << console::reset << std::endl;
+  }
+  if (image_topic.empty()) {
+    std::cerr << console::bold_yellow << "warning: failed to get image topic!!" << console::reset << std::endl;
+  }
+  if (points_topic.empty()) {
+    std::cerr << console::bold_yellow << "warning: failed to get points topic!!" << console::reset << std::endl;
   }
 
   return {camera_info_topic, image_topic, points_topic};
@@ -321,6 +338,7 @@ std::string Preprocess::get_intensity_channel(const boost::program_options::vari
 
   if (intensity_channel == "auto") {
     std::cerr << vlcal::console::bold_red << "error: failed to determine point intensity channel automatically" << vlcal::console::reset << std::endl;
+    std::cerr << vlcal::console::bold_red << "     : you must specify the intensity channel to be used manually" << vlcal::console::reset << std::endl;
   }
 
   return intensity_channel;
@@ -342,6 +360,13 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
     const std::unordered_set<std::string> valid_camera_models = {"plumb_bob", "fisheye", "omnidir", "equirectangular"};
     if (!valid_camera_models.count(camera_model)) {
       std::cerr << vlcal::console::bold_red << "error: invalid camera model " << camera_model << vlcal::console::reset << std::endl;
+
+      std::stringstream sst;
+      for (const auto& model : valid_camera_models) {
+        sst << " " << model;
+      }
+      std::cerr << vlcal::console::bold_red << "     : supported camera models are" << sst.str() << vlcal::console::reset << std::endl;
+
       abort();
     }
 
@@ -364,7 +389,7 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
     return {camera_model, image_size, intrinsics, distortion_coeffs};
   }
 
-  std::cout << "auto" << std::endl;
+  std::cout << "try to get the camera model automatically" << std::endl;
   auto [distortion_model, intrinsics, distortion_coeffs] = get_camera_info(bag_filename, camera_info_topic);
   return {distortion_model, image_size, intrinsics, distortion_coeffs};
 }
