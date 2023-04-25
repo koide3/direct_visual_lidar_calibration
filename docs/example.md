@@ -10,7 +10,7 @@
 - [ouster_ros1.tar.gz (ROS1)](https://zenodo.org/record/7779880/files/ouster_ros1.tar.gz?download=1)
 
 !!!note
-    CameraInfo messages in ROS1 bag files exhibit an MD5 checksum that is different from that of the standard sensor_msgs/CameraInfo msg due to ROS2-ROS1 bag conversion issues. Because this affects the automatic camera info extraction, you need to manually specify camera parameters for preprocessing.
+    CameraInfo messages in the example ROS1 bag files exhibit an MD5 checksum that is different from that of the standard sensor_msgs/CameraInfo msg due to ROS2-ROS1 bag conversion issues. Because this affects the automatic camera info extraction, you need to manually specify camera parameters for preprocessing.
 
 ## Livox-camera calibration
 
