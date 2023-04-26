@@ -375,6 +375,13 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
     if (camera_model == "equirectangular") {
       intrinsics = {static_cast<double>(image_size.width), static_cast<double>(image_size.height)};
     } else {
+      if (!vm.count("camera_intrinsics")) {
+        std::cerr << vlcal::console::bold_red << "error: camera_intrinsics has not been set!!" << vlcal::console::reset << std::endl;
+      }
+      if (!vm.count("camera_distortion_coeffs")) {
+        std::cerr << vlcal::console::bold_red << "error: camera_distortion_coeffs has not been set!!" << vlcal::console::reset << std::endl;
+      }
+
       std::vector<std::string> intrinsic_tokens;
       std::vector<std::string> distortion_tokens;
       boost::split(intrinsic_tokens, vm["camera_intrinsics"].as<std::string>(), boost::is_any_of(","));
