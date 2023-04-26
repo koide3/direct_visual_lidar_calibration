@@ -6,10 +6,12 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
 
 #define GLIM_ROS2
+#include <vlcal/common/console_colors.hpp>
 #include <vlcal/common/ros_cloud_converter.hpp>
 
 namespace vlcal {
@@ -60,10 +62,12 @@ protected:
       }
     }
 
-    std::cerr << "error: bag does not contain topic" << std::endl;
-    std::cerr << "     : bag_filename=" << bag_filename << std::endl;
-    std::cerr << "     : topic=" << topic << std::endl;
-    abort();
+    std::cerr << console::yellow;
+    std::cerr << "warning: bag does not contain topic" << std::endl;
+    std::cerr << "       : bag_filename=" << bag_filename << std::endl;
+    std::cerr << "       : topic=" << topic << std::endl;
+    std::cerr << console::reset;
+
     return nullptr;
   }
 
@@ -93,7 +97,18 @@ protected:
 
   virtual cv::Size get_image_size(const std::string& bag_filename, const std::string& image_topic) override {
     const auto image_msg = get_first_message<sensor_msgs::Image>(bag_filename, image_topic);
-    return cv::Size(image_msg->width, image_msg->height);
+    if(image_msg) {
+      return cv::Size(image_msg->width, image_msg->height);
+    }
+
+    const auto compressed_image_msg = get_first_message<sensor_msgs::CompressedImage>(bag_filename, image_topic);
+    if (compressed_image_msg) {
+      const cv::Mat image = cv_bridge::toCvCopy(*compressed_image_msg, "mono8")->image;
+      return cv::Size(image.cols, image.rows);
+    }
+
+    std::cerr << console::bold_red << "error: failed to retrieve image messages from the bag file" << console::reset << std::endl;
+    return cv::Size(0, 0);
   }
 
   virtual std::tuple<std::string, std::vector<double>, std::vector<double>> get_camera_info(const std::string& bag_filename, const std::string& camera_info_topic) override {
@@ -110,7 +125,17 @@ protected:
 
   virtual cv::Mat get_image(const std::string& bag_filename, const std::string& image_topic) override {
     const auto image_msg = get_first_message<sensor_msgs::Image>(bag_filename, image_topic);
-    return cv_bridge::toCvCopy(*image_msg, "mono8")->image;
+    if (image_msg) {
+      return cv_bridge::toCvCopy(*image_msg, "mono8")->image;
+    }
+
+    const auto compressed_image_msg = get_first_message<sensor_msgs::CompressedImage>(bag_filename, image_topic);
+    if (compressed_image_msg) {
+      return cv_bridge::toCvCopy(*compressed_image_msg, "mono8")->image;
+    }
+
+    std::cerr << console::bold_red << "error: failed to retrieve image messages from the bag file" << console::reset << std::endl;
+    return cv::Mat();
   }
 
   virtual std::shared_ptr<PointCloudReader> get_point_cloud_reader(const std::string& bag_filename, const std::string& points_topic, const std::string& intensity_channel)
