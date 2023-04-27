@@ -34,6 +34,7 @@ public:
     guik::LightViewer::instance()->append_text((boost::format("picked_2d: %.1f %.1f") % pt.x() % pt.y()).str());
     picked_pt_2d = pt;
   }
+
   void pick_point_3d(const Eigen::Vector4d& pt) {
     guik::LightViewer::instance()->append_text((boost::format("picked_3d: %.1f %.1f %.1f") % pt.x() % pt.y() % pt.z()).str());
     picked_pt_3d = pt;
@@ -72,7 +73,7 @@ public:
 
 class InitialGuessManual {
 public:
-  InitialGuessManual(const std::string& data_path) : data_path(data_path) {
+  InitialGuessManual(const std::string& data_path) : data_path(data_path), camera_image_rotate_code(-1) {
     std::ifstream ifs(data_path + "/calib.json");
     if (!ifs) {
       std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path << "/calib.json" << vlcal::console::reset << std::endl;
@@ -144,9 +145,35 @@ public:
 
       ImGui::Begin("control", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
+      ImGui::Text("Rotate camera image");
+      if (ImGui::Button("0 deg")) {
+        camera_image_rotate_code = -1;
+        update_image();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("90 deg")) {
+        camera_image_rotate_code = cv::ROTATE_90_CLOCKWISE;
+        update_image();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("180 deg")) {
+        camera_image_rotate_code = cv::ROTATE_180;
+        update_image();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("270 deg")) {
+        camera_image_rotate_code = cv::ROTATE_90_COUNTERCLOCKWISE;
+        update_image();
+      }
+
+      ImGui::Separator();
+
+      ImGui::Text("T_lidar_camera");
       T_lidar_camera_gizmo.draw_gizmo();
       T_lidar_camera_gizmo.draw_gizmo_ui();
       vis->set_T_camera_lidar(Eigen::Isometry3d(T_lidar_camera_gizmo.model_matrix().cast<double>().inverse()));
+
+      ImGui::Separator();
 
       if (ImGui::Button("Add picked points")) {
         picking->add();
@@ -159,6 +186,7 @@ public:
         }
       }
 
+      ImGui::SameLine();
       if (ImGui::Button("Save")) {
         const Eigen::Isometry3d T_lidar_camera(T_lidar_camera_gizmo.model_matrix().cast<double>());
         const Eigen::Vector3d trans = T_lidar_camera.translation();
@@ -191,6 +219,39 @@ public:
     }
   }
 
+  void update_image() {
+    const double scale = vis->get_image_display_scale();
+
+    cv::Mat resized, canvas;
+    cv::resize(dataset[vis->get_selected_bag_id()]->image, resized, cv::Size(), scale, scale);
+    cv::cvtColor(resized, canvas, cv::COLOR_GRAY2BGR);
+
+    if (camera_image_rotate_code >= 0) {
+      cv::rotate(canvas.clone(), canvas, camera_image_rotate_code);
+    }
+
+    cv::imshow("image", canvas);
+  }
+
+  Eigen::Vector2d transform_camera_point(const Eigen::Vector2d& pt) {
+    const cv::Size image_size = dataset[vis->get_selected_bag_id()]->image.size();
+
+    std::cout << "image_size=" << image_size << std::endl;
+    switch (camera_image_rotate_code) {
+      case -1:
+        return pt;
+      case cv::ROTATE_90_CLOCKWISE:
+        return {pt.y(), image_size.height - pt.x()};
+      case cv::ROTATE_180:
+        return {image_size.width - pt.x(), image_size.height - pt.y()};
+      case cv::ROTATE_90_COUNTERCLOCKWISE:
+        return {image_size.width - pt.y(), pt.x()};
+    }
+
+    std::cerr << "error: unknown rotate code " << camera_image_rotate_code << std::endl;
+    return pt;
+  }
+
   void on_mouse(int event, int x, int y, int flags) {
     if (event != cv::EVENT_RBUTTONDOWN) {
       return;
@@ -202,6 +263,10 @@ public:
     cv::resize(dataset[vis->get_selected_bag_id()]->image, resized, cv::Size(), scale, scale);
     cv::cvtColor(resized, canvas, cv::COLOR_GRAY2BGR);
 
+    if (camera_image_rotate_code >= 0) {
+      cv::rotate(canvas.clone(), canvas, camera_image_rotate_code);
+    }
+
     const int cross_size = 15;
     cv::line(canvas, {x - cross_size, y - cross_size}, {x + cross_size, y + cross_size}, cv::Scalar(64, 64, 64), 4, cv::LINE_AA);
     cv::line(canvas, {x + cross_size, y - cross_size}, {x - cross_size, y + cross_size}, cv::Scalar(64, 64, 64), 4, cv::LINE_AA);
@@ -209,7 +274,8 @@ public:
     cv::line(canvas, {x + cross_size, y - cross_size}, {x - cross_size, y + cross_size}, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
     cv::imshow("image", canvas);
 
-    picking->pick_point_2d({x / scale, y / scale});
+    const Eigen::Vector2d pt = transform_camera_point({x / scale, y / scale});
+    picking->pick_point_2d(pt);
   }
 
   static void mouse_callback(int event, int x, int y, int flags, void* userdata) {
@@ -220,6 +286,8 @@ public:
 private:
   const std::string data_path;
   nlohmann::json config;
+
+  int camera_image_rotate_code;
 
   camera::GenericCameraBase::ConstPtr proj;
   std::vector<VisualLiDARData::ConstPtr> dataset;
