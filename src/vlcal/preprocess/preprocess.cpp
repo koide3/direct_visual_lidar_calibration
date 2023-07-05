@@ -51,7 +51,7 @@ bool Preprocess::run(int argc, char** argv) {
     ("camera_info_topic", value<std::string>())
     ("image_topic", value<std::string>())
     ("points_topic", value<std::string>())
-    ("camera_model", value<std::string>()->default_value("auto"), "auto, atan, plumb_bob, fisheye, omnidir, or equirectangular")
+    ("camera_model", value<std::string>()->default_value("auto"), "auto, atan, plumb_bob, fisheye(=equidistant), omnidir, or equirectangular")
     ("camera_intrinsics", value<std::string>(), "camera intrinsic parameters [fx,fy,cx,cy(,xi)] (don't put spaces between values!!)")
     ("camera_distortion_coeffs", value<std::string>(), "camera distortion parameters [k1,k2,p1,p2,k3] (don't put spaces between values!!)")
     ("voxel_resolution", value<double>()->default_value(0.002), "voxel grid resolution")
@@ -293,7 +293,7 @@ std::tuple<std::string, std::string, std::string> Preprocess::get_topics(const b
 
   if (camera_info_topic.empty() && vm.count("camera_info_topic")) {
     camera_info_topic = vm["camera_info_topic"].as<std::string>();
-  } 
+  }
   if (image_topic.empty() && vm.count("image_topic")) {
     image_topic = vm["image_topic"].as<std::string>();
   }
@@ -357,7 +357,7 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
 
   std::string camera_model = vm["camera_model"].as<std::string>();
   if (camera_model != "auto") {
-    const std::unordered_set<std::string> valid_camera_models = {"plumb_bob", "fisheye", "omnidir", "equirectangular"};
+    const std::unordered_set<std::string> valid_camera_models = {"plumb_bob", "fisheye", "equidistant", "omnidir", "equirectangular"};
     if (!valid_camera_models.count(camera_model)) {
       std::cerr << vlcal::console::bold_red << "error: invalid camera model " << camera_model << vlcal::console::reset << std::endl;
 
