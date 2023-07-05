@@ -21,7 +21,8 @@ Eigen::Vector3d estimate_direction(const camera::GenericCameraBase::ConstPtr& pr
 
   const auto f = [&](const Eigen::Vector2d& x) {
     const Eigen::Vector3d dir = to_dir(x);
-    return (pt_2d - proj->project(dir)).squaredNorm();
+    const double err = (pt_2d - proj->project(dir)).squaredNorm();
+    return std::isfinite(err) ? err : std::numeric_limits<double>::max();
   };
 
   // TODO : should use differential-based optimization

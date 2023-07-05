@@ -85,6 +85,11 @@ public:
     const std::string camera_model = config["camera"]["camera_model"];
     const std::vector<double> intrinsics = config["camera"]["intrinsics"];
     const std::vector<double> distortion_coeffs = config["camera"]["distortion_coeffs"];
+
+    std::cout << "camera_model:" << camera_model << std::endl;
+    std::cout << "intrinsics  :" << intrinsics.size() << std::endl;
+    std::cout << "distortion  :" << distortion_coeffs.size() << std::endl;
+
     proj = camera::create_camera(camera_model, intrinsics, distortion_coeffs);
 
     const std::vector<std::string> bag_names = config["meta"]["bag_names"];
@@ -93,6 +98,7 @@ public:
     }
 
     const auto image_size = dataset[0]->image.size();
+    std::cout << "image_size:" << image_size.width << "x" << image_size.height << std::endl;
     std::cout << "camera_fov:" << estimate_camera_fov(proj, {image_size.width, image_size.height}) * 180.0 / M_PI << "[deg]" << std::endl;
 
     vis.reset(new VisualLiDARVisualizer(proj, dataset, true, true));
