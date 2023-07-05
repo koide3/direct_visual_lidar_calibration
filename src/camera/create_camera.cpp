@@ -33,7 +33,7 @@ camera::GenericCameraBase::ConstPtr create_camera(const std::vector<double>& int
 camera::GenericCameraBase::ConstPtr create_camera(const std::string& camera_model, const std::vector<double>& intrinsics, const std::vector<double>& distortion_coeffs) {
   if (camera_model == "plumb_bob") {
     return create_camera<camera::PinholeProjection>(intrinsics, distortion_coeffs);
-  } else if (camera_model == "fisheye") {
+  } else if (camera_model == "fisheye" || camera_model == "equidistant") {
     return create_camera<camera::FisheyeProjection>(intrinsics, distortion_coeffs);
   } else if (camera_model == "atan") {
     return create_camera<camera::ATANProjection>(intrinsics, distortion_coeffs);
