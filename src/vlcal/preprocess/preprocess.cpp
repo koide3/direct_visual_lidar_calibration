@@ -62,7 +62,7 @@ bool Preprocess::run(int argc, char** argv) {
 
   positional_options_description p;
   p.add("data_path", 1);
-  p.add("dst_path", 2);
+  p.add("dst_path", 1);
 
   variables_map vm;
   store(command_line_parser(argc, argv).options(description).positional(p).run(), vm);
