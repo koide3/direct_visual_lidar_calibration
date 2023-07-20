@@ -54,8 +54,10 @@ bool Preprocess::run(int argc, char** argv) {
     ("camera_model", value<std::string>()->default_value("auto"), "auto, atan, plumb_bob, fisheye(=equidistant), omnidir, or equirectangular")
     ("camera_intrinsics", value<std::string>(), "camera intrinsic parameters [fx,fy,cx,cy(,xi)] (don't put spaces between values!!)")
     ("camera_distortion_coeffs", value<std::string>(), "camera distortion parameters [k1,k2,p1,p2,k3] (don't put spaces between values!!)")
+    ("k_neighbors", value<int>()->default_value(20), "num of neighbor points used for point covariance estimation of CT-ICP")
     ("voxel_resolution", value<double>()->default_value(0.002), "voxel grid resolution")
     ("min_distance", value<double>()->default_value(1.0), "minimum point distance. Points closer than this value will be discarded")
+    ("verbose", "if true, print out optimization status")
     ("visualize,v", "if true, show extracted images and points")
   ;
   // clang-format on
@@ -423,6 +425,8 @@ std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
   if (vm.count("dynamic_lidar_integration")) {
     vlcal::DynamicPointCloudIntegratorParams params;
     params.visualize = vm.count("visualize");
+    params.verbose = vm.count("verbose");
+    params.k_neighbors = vm["k_neighbors"].as<int>();
     params.voxel_resolution = vm["voxel_resolution"].as<double>();
     params.min_distance = vm["min_distance"].as<double>();
     params.num_threads = num_threads;
@@ -450,6 +454,8 @@ std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
     auto points = std::make_shared<FrameCPU>(raw_points->points);
     points->add_times(raw_points->times);
     points->add_intensities(raw_points->intensities);
+    points = filter(points, [](const Eigen::Vector4d& p) { return p.array().isFinite().all(); });
+
     points_integrator->insert_points(points);
   }
 

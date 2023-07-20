@@ -21,6 +21,7 @@ namespace vlcal {
 
 DynamicPointCloudIntegratorParams::DynamicPointCloudIntegratorParams() {
   visualize = false;
+  verbose = false;
   num_threads = 16;
   k_neighbors = 20;
   target_num_points = 10000;
@@ -92,6 +93,9 @@ void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_point
 
   gtsam::LevenbergMarquardtParams lm_params;
   lm_params.setMaxIterations(10);
+  if (params.verbose) {
+    lm_params.setVerbosityLM("SUMMARY");
+  }
 
   for (int i = 0; i < 3; i++) {
     values = gtsam::LevenbergMarquardtOptimizer(graph, values, lm_params).optimize();

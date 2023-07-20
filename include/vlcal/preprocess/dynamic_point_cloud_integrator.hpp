@@ -26,6 +26,7 @@ public:
   ~DynamicPointCloudIntegratorParams();
 
   bool visualize;         ///< If true, show integrated points
+  bool verbose;           ///< If true, print out optimization progress
   int num_threads;        ///< Number of threads
   int k_neighbors;        ///< Number of neighbor points for covariance estimation
   int target_num_points;  ///< Target number of points for downsampling
