@@ -142,7 +142,7 @@ def main():
       kp0 = kpts0[i]
       kp1 = kpts1[match]
 
-      color = tuple((numpy.array(cmap(confidence[i])) * 255).astype(numpy.int).tolist())
+      color = tuple((numpy.array(cmap(confidence[i])) * 255).astype(int).tolist())
 
       cv2.line(canvas, (int(kp0[0]), int(kp0[1])), (int(kp1[0]), int(kp1[1])), color)
 
