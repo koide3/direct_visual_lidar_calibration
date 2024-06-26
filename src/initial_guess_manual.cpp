@@ -188,7 +188,7 @@ public:
       if (ImGui::Button("Estimate")) {
         const auto T_camera_lidar = picking->estimate();
         if (T_camera_lidar) {
-          T_lidar_camera_gizmo.set_model_matrix(T_camera_lidar->inverse().matrix().cast<float>());
+          T_lidar_camera_gizmo.set_model_matrix(T_camera_lidar->inverse().cast<float>().matrix());
         }
       }
 
@@ -203,8 +203,7 @@ public:
 
         std::ofstream ofs(data_path + "/calib.json");
         if (!ofs) {
-          std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/calib.json"
-                    << " for writing" << vlcal::console::reset << std::endl;
+          std::cerr << vlcal::console::bold_red << "error: failed to open " << data_path + "/calib.json" << " for writing" << vlcal::console::reset << std::endl;
         } else {
           ofs << config.dump(2) << std::endl;
         }
