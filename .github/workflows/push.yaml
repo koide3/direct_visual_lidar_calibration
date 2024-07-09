@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ROS_DISTRO: [humble, noetic]
+        ROS_DISTRO: [jazzy, humble, noetic]
 
     steps:
       - uses: actions/checkout@v2

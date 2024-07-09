@@ -27,6 +27,13 @@ find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 find_package(Iridescence REQUIRED)
 
+set(OLD_DISTRO "humble;galactic;foxy")
+if($ENV{ROS_DISTRO} IN_LIST OLD_DISTRO)
+  add_definitions(-DCV_BRIDGE_INCLUDE_H)
+else()
+  add_definitions(-DCV_BRIDGE_INCLUDE_HPP)
+endif()
+
 find_package(OpenMP)
 if (OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

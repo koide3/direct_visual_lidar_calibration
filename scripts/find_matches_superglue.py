@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # WARNING: SuperGlue is allowed to be used for non-commercial research purposes!!
 #        : You must carefully check and follow its licensing condition!!
 #        : https://github.com/magicleap/SuperGluePretrainedNetwork/blob/master/LICENSE

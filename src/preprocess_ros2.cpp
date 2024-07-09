@@ -5,7 +5,14 @@
 #include <rosbag2_cpp/readers/sequential_reader.hpp>
 #include <rosbag2_storage/storage_filter.hpp>
 
+#ifdef CV_BRIDGE_INCLUDE_H
 #include <cv_bridge/cv_bridge.h>
+#elif CV_BRIDGE_INCLUDE_HPP
+#include <cv_bridge/cv_bridge.hpp>
+#else
+#error "File extension of cv_bridge is unknown!!"
+#endif
+
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>

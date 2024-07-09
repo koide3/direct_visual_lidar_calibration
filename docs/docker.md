@@ -5,6 +5,10 @@ We provide ROS1/ROS2 docker images on our docker hub repository:
 - [koide3/direct_visual_lidar_calibration:noetic ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/koide3/direct_visual_lidar_calibration/noetic)](https://hub.docker.com/repository/docker/koide3/direct_visual_lidar_calibration)
 - [koide3/direct_visual_lidar_calibration:humble ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/koide3/direct_visual_lidar_calibration/humble)](https://hub.docker.com/repository/docker/koide3/direct_visual_lidar_calibration)
 
+!!!warning
+    We avoided including SuperGlue in our images to avoid contamination of its strict license.
+    If you need the automatic image matching, you must build a docker image with [Dockerfile_with_superglue](https://github.com/koide3/direct_visual_lidar_calibration/tree/main/docker/humble) at your own risk.
+
 ## Pull image
 
 ```bash
