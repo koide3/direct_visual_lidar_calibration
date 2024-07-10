@@ -6,7 +6,13 @@ RUN apt-fast update \
   && apt-fast clean \
   && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /root
+RUN apt-fast update \
+  && apt-fast install -y --no-install-recommends \
+  libpcl-dev \
+  && apt-fast clean \
+  && rm -rf /var/lib/apt/lists/*
+
+  WORKDIR /root
 RUN git clone https://github.com/ceres-solver/ceres-solver \
   && mkdir ceres-solver/build \
   && cd ceres-solver/build \
