@@ -4,7 +4,7 @@ repo_url: https://github.com/koide3/direct_visual_lidar_calibration
 site_url: https://koide3.github.io/direct_visual_lidar_calibration/
 site_description: "LiDAR-Camera extrinsic calibration toolbox"
 
-theme: 
+theme:
     name: material
     palette:
         primary: indigo
@@ -23,7 +23,6 @@ markdown_extensions:
     - pymdownx.emoji:
         emoji_index: !!python/name:materialx.emoji.twemoji
         emoji_generator: !!python/name:materialx.emoji.to_svg
-    - fontawesome_markdown
 
 copyright: Copyright &copy; 2023 Kenji Koide
 extra:
