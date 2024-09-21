@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.2)
+cmake_minimum_required(VERSION 3.16)
 project(direct_visual_lidar_calibration)
 
 add_compile_options(-std=c++17)

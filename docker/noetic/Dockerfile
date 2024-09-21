@@ -17,6 +17,15 @@ RUN git clone https://github.com/ceres-solver/ceres-solver \
   && make install \
   && rm -rf /root/ceres-solver
 
+RUN test -f /usr/share/doc/kitware-archive-keyring/copyright || wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null 
+RUN echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null
+RUN echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal-rc main' | tee -a /etc/apt/sources.list.d/kitware.list >/dev/null
+
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && apt-fast clean \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY . /root/catkin_ws/src/direct_visual_lidar_calibration
 
 WORKDIR /root/catkin_ws
