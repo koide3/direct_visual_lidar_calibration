@@ -3,6 +3,9 @@
 !!!note
     We provide docker images so that the user can do calibration without installation: [Docker images](docker.md)
 
+!!!warn
+    On Ubuntu 20.04, [install a newer cmake](https://apt.kitware.com/).
+
 ## Dependencies
 
 - [ROS1/ROS2](https://www.ros.org/)
@@ -33,7 +36,9 @@ sudo make install
 
 # Install Ceres
 git clone https://github.com/ceres-solver/ceres-solver
-mkdir ceres-solver/build && cd ceres-solver/build
+cd ceres-solver
+git checkout e47a42c2957951c9fafcca9995d9927e15557069
+mkdir build && cd build
 cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DUSE_CUDA=OFF
 make -j$(nproc)
 sudo make install
