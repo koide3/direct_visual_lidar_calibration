@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.2)
+cmake_minimum_required(VERSION 3.16)
 project(direct_visual_lidar_calibration)
 
 add_compile_options(-std=c++17)
@@ -72,7 +72,6 @@ target_include_directories(direct_visual_lidar_calibration PUBLIC
   ${GTSAM_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${Iridescence_INCLUDE_DIRS}
 )
 target_link_libraries(direct_visual_lidar_calibration
   fmt
@@ -81,7 +80,7 @@ target_link_libraries(direct_visual_lidar_calibration
   ${CERES_LIBRARIES}
   ${GTSAM_LIBRARIES}
   ${OpenCV_LIBRARIES}
-  ${Iridescence_LIBRARIES}
+  Iridescence::Iridescence
 )
 
 

@@ -8,12 +8,15 @@ RUN apt-fast update \
 
 WORKDIR /root
 RUN git clone https://github.com/ceres-solver/ceres-solver \
-  && mkdir ceres-solver/build \
-  && cd ceres-solver/build \
+  && cd ceres-solver \
+  && git checkout e47a42c2957951c9fafcca9995d9927e15557069 \
+  && mkdir build \
+  && cd build \
   && cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DUSE_CUDA=OFF \
   && make -j$(nproc) \
   && make install \
   && rm -rf /root/ceres-solver
+
 
 COPY . /root/ros2_ws/src/direct_visual_lidar_calibration
 
