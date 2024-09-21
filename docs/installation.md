@@ -32,7 +32,8 @@ make -j$(nproc)
 sudo make install
 
 # Install Ceres
-git clone https://github.com/ceres-solver/ceres-solver
+# git clone https://github.com/ceres-solver/ceres-solver
+git clone --recurse-submodules https://github.com/ceres-solver/ceres-solver
 mkdir ceres-solver/build && cd ceres-solver/build
 cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DUSE_CUDA=OFF
 make -j$(nproc)
