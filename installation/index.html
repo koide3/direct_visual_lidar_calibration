@@ -504,6 +504,10 @@
 <p class="admonition-title">Note</p>
 <p>We provide docker images so that the user can do calibration without installation: <a href="../docker/">Docker images</a></p>
 </div>
+<div class="admonition warn">
+<p class="admonition-title">Warn</p>
+<p>On Ubuntu 20.04, <a href="https://apt.kitware.com/">install a newer cmake</a>.</p>
+</div>
 <h2 id="dependencies">Dependencies</h2>
 <ul>
 <li><a href="https://www.ros.org/">ROS1/ROS2</a></li>
@@ -531,18 +535,20 @@
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>sudo<span class="w"> </span>make<span class="w"> </span>install
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Install Ceres</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ceres-solver/ceres-solver
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>mkdir<span class="w"> </span>ceres-solver/build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>ceres-solver/build
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_EXAMPLES<span class="o">=</span>OFF<span class="w"> </span>-DBUILD_TESTING<span class="o">=</span>OFF<span class="w"> </span>-DUSE_CUDA<span class="o">=</span>OFF
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>sudo<span class="w"> </span>make<span class="w"> </span>install
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1"># Install Iridescence for visualization</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/koide3/iridescence<span class="w"> </span>--recursive
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>mkdir<span class="w"> </span>iridescence/build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>iridescence/build
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>cmake<span class="w"> </span>..<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>sudo<span class="w"> </span>make<span class="w"> </span>install
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>https://github.com/ceres-solver/ceres-solver
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="nb">cd</span><span class="w"> </span>ceres-solver
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>git<span class="w"> </span>checkout<span class="w"> </span>e47a42c2957951c9fafcca9995d9927e15557069
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>mkdir<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_EXAMPLES<span class="o">=</span>OFF<span class="w"> </span>-DBUILD_TESTING<span class="o">=</span>OFF<span class="w"> </span>-DUSE_CUDA<span class="o">=</span>OFF
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>sudo<span class="w"> </span>make<span class="w"> </span>install
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1"># Install Iridescence for visualization</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/koide3/iridescence<span class="w"> </span>--recursive
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>mkdir<span class="w"> </span>iridescence/build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>iridescence/build
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>cmake<span class="w"> </span>..<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>sudo<span class="w"> </span>make<span class="w"> </span>install
 </code></pre></div>
 <h2 id="install-superglue-optional">Install SuperGlue (Optional)</h2>
 <div class="admonition warning">
