@@ -35,7 +35,7 @@ make -j$(nproc)
 sudo make install
 
 # Install Ceres
-git clone https://github.com/ceres-solver/ceres-solver
+git clone --recurse-submodules https://github.com/ceres-solver/ceres-solver
 cd ceres-solver
 git checkout e47a42c2957951c9fafcca9995d9927e15557069
 mkdir build && cd build
