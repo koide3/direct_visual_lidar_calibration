@@ -92,6 +92,14 @@ void TimeKeeper::replace_points_stamp(const vlcal::RawPoints::Ptr& points) {
   if (points->times.front() < 0.0 || points->times.back() < 0.0) {
     std::cerr << console::yellow << boost::format("warning: negative per-point timestamp (%.6f or %.6f) found!!") % points->times.front() % points->times.back() << console::reset
               << std::endl;
+
+    const double min_time = *std::min_element(points->times.begin(), points->times.end());
+    std::cerr << console::yellow << boost::format("       : min_stamp=%.6f") % min_time << console::reset
+              << std::endl;
+    for (auto& time : points->times) {
+      time -= min_time;
+    }
+    points->stamp -= min_time;
   }
 
   // Point timestamps are already relative to the first one
