@@ -175,7 +175,7 @@ static RawPoints::Ptr extract_raw_points(const PointCloud2& points_msg, const st
 }
 
 static RawPoints::Ptr extract_raw_points(const PointCloud2ConstPtr& points_msg, const std::string& intensity_channel = "intensity") {
-  return extract_raw_points(*points_msg);
+  return extract_raw_points(*points_msg, intensity_channel);
 }
 
 }  // namespace vlcal
