@@ -1,23 +1,27 @@
 cmake_minimum_required(VERSION 3.16)
-project(direct_visual_lidar_calibration)
+project(direct_visual_lidar_calibration VERSION 0.0.1)
 
 add_compile_options(-std=c++17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if($ENV{ROS_VERSION} EQUAL 1)
-  # ROS1
-  find_package(catkin REQUIRED COMPONENTS rosbag sensor_msgs cv_bridge)
-  catkin_package()
-else()
-  # ROS2
-  find_package(ament_cmake_auto REQUIRED)
-  find_package(ament_cmake_python REQUIRED)
-  ament_auto_find_build_dependencies()
+option(ENABLE_ROS OFF)
+
+if(ENABLE_ROS)
+    if($ENV{ROS_VERSION} EQUAL 1)
+      # ROS1
+      find_package(catkin REQUIRED COMPONENTS rosbag sensor_msgs cv_bridge)
+      catkin_package()
+    else()
+      # ROS2
+      find_package(ament_cmake_auto REQUIRED)
+      find_package(ament_cmake_python REQUIRED)
+      ament_auto_find_build_dependencies()
+    endif()
 endif()
 
 find_package(PCL REQUIRED)
@@ -26,12 +30,15 @@ find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 find_package(Iridescence REQUIRED)
+find_package(fmt REQUIRED)
 
+if(ENABLE_ROS)
 set(OLD_DISTRO "humble;galactic;foxy")
-if($ENV{ROS_DISTRO} IN_LIST OLD_DISTRO)
-  add_definitions(-DCV_BRIDGE_INCLUDE_H)
-else()
-  add_definitions(-DCV_BRIDGE_INCLUDE_HPP)
+    if($ENV{ROS_DISTRO} IN_LIST OLD_DISTRO)
+      add_definitions(-DCV_BRIDGE_INCLUDE_H)
+    else()
+      add_definitions(-DCV_BRIDGE_INCLUDE_HPP)
+    endif()
 endif()
 
 find_package(OpenMP)
@@ -62,19 +69,82 @@ add_library(direct_visual_lidar_calibration SHARED
   src/vlcal/calib/visual_camera_calibration.cpp
 )
 target_include_directories(direct_visual_lidar_calibration PUBLIC
-  include
-  thirdparty/json/include
-  thirdparty/Bonxai/include
-  thirdparty/nanoflann/include
-  thirdparty/Sophus
-  ${Boost_INCLUDE_DIRS}
-  ${CERES_INCLUDE_DIRS}
-  ${GTSAM_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/thirdparty/json/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/thirdparty/Bonxai/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/thirdparty/nanoflann/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/thirdparty/Sophus>
+
+    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:thirdparty/json/include>
+    $<INSTALL_INTERFACE:thirdparty/Bonxai/include>
+    $<INSTALL_INTERFACE:thirdparty/nanoflann/include>
+    $<INSTALL_INTERFACE:thirdparty/Sophus>
+
+    ${Boost_INCLUDE_DIRS}
+    ${CERES_INCLUDE_DIRS}
+    ${GTSAM_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
+
+target_sources(direct_visual_lidar_calibration PUBLIC
+    FILE_SET public_headers
+    TYPE HEADERS
+    BASE_DIRS ${PROJECT_SOURCE_DIR}/include/
+    FILES
+   ${PROJECT_SOURCE_DIR}/include/dfo/optimizer.hpp
+   ${PROJECT_SOURCE_DIR}/include/dfo/directional_direct_search.hpp
+   ${PROJECT_SOURCE_DIR}/include/dfo/nelder_mead.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/generic_camera.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/atan.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/traits.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/fisheye.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/pinhole.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/omnidir.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/equirectangular.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/generic_camera_base.hpp
+   ${PROJECT_SOURCE_DIR}/include/camera/create_camera.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/calib/visual_camera_calibration.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/calib/cost_calculator.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/calib/view_culling.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/calib/cost_calculator_nid.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/costs/reprojection_cost.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/costs/nid_cost.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/preprocess/preprocess.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/preprocess/generate_lidar_image.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/preprocess/dynamic_point_cloud_integrator.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/preprocess/point_cloud_integrator.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/preprocess/static_point_cloud_integrator.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/console_colors.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/integrated_ct_gicp_factor.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/ros_cloud_converter.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/raw_points.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/frame_cpu.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/kdtree2.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/points_color_updater.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/integrated_ct_icp_factor_impl.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/statistical_median_filter.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/estimate_fov.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/nearest_neighbor_search.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/time_keeper.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/vector3i_hash.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/visual_lidar_data.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/concurrent_queue.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/cloud_covariance_estimation.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/visual_lidar_visualizer.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/integrated_ct_icp_factor.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/frame.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/ivox.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/integrated_ct_gicp_factor_impl.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/frame_traits.hpp
+   ${PROJECT_SOURCE_DIR}/include/vlcal/common/estimate_pose.hpp
+   ${PROJECT_SOURCE_DIR}/include/nanoflann.hpp
+    )
+
+
 target_link_libraries(direct_visual_lidar_calibration
-  fmt
+  fmt::fmt
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
   ${CERES_LIBRARIES}
@@ -84,37 +154,41 @@ target_link_libraries(direct_visual_lidar_calibration
 )
 
 
-if($ENV{ROS_VERSION} EQUAL 1)
-  # ROS1
-  add_executable(preprocess
-    src/preprocess_ros1.cpp
-  )
-  target_link_libraries(preprocess
-    direct_visual_lidar_calibration
-  )
-  target_include_directories(preprocess PUBLIC
-    ${catkin_INCLUDE_DIRS}
-  )
-  target_link_libraries(preprocess
-    ${catkin_LIBRARIES}
-  )
-else()
-  # ROS2
-  ament_auto_add_executable(preprocess
-    src/preprocess_ros2.cpp
-  )
-  target_link_libraries(preprocess
-    direct_visual_lidar_calibration
-  )
+if(ENABLE_ROS)
+    if($ENV{ROS_VERSION} EQUAL 1)
+      # ROS1
+      add_executable(preprocess
+        src/preprocess_ros1.cpp
+      )
+      target_link_libraries(preprocess
+        direct_visual_lidar_calibration
+      )
+      target_include_directories(preprocess PUBLIC
+        ${catkin_INCLUDE_DIRS}
+      )
+      target_link_libraries(preprocess
+        ${catkin_LIBRARIES}
+      )
+    else()
+      # ROS2
+      ament_auto_add_executable(preprocess
+        src/preprocess_ros2.cpp
+      )
+      target_link_libraries(preprocess
+        direct_visual_lidar_calibration
+      )
+    endif()
 endif()
 
 # preprocess_map
 add_executable(preprocess_map
   src/preprocess_map.cpp
 )
+if (ENABLE_ROS)
 target_include_directories(preprocess_map PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
+endif()
 target_link_libraries(preprocess_map
   direct_visual_lidar_calibration
 )
@@ -123,9 +197,11 @@ target_link_libraries(preprocess_map
 add_executable(initial_guess_manual
   src/initial_guess_manual.cpp
 )
+if (ENABLE_ROS)
 target_include_directories(initial_guess_manual PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
+endif()
 target_link_libraries(initial_guess_manual
   direct_visual_lidar_calibration
 )
@@ -134,9 +210,11 @@ target_link_libraries(initial_guess_manual
 add_executable(initial_guess_auto
   src/initial_guess_auto.cpp
 )
+if (ENABLE_ROS)
 target_include_directories(initial_guess_auto PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
+endif()
 target_link_libraries(initial_guess_auto
   direct_visual_lidar_calibration
 )
@@ -145,9 +223,11 @@ target_link_libraries(initial_guess_auto
 add_executable(calibrate
   src/calibrate.cpp
 )
+if (ENABLE_ROS)
 target_include_directories(calibrate PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
+endif()
 target_link_libraries(calibrate
   direct_visual_lidar_calibration
 )
@@ -156,35 +236,66 @@ target_link_libraries(calibrate
 add_executable(viewer
   src/viewer.cpp
 )
+
+if (ENABLE_ROS)
 target_include_directories(viewer PRIVATE
   ${catkin_INCLUDE_DIRS}
 )
+endif()
+
 target_link_libraries(viewer
   direct_visual_lidar_calibration
 )
 
+include(GNUInstallDirs)
+
 install(
   TARGETS
   direct_visual_lidar_calibration
+  EXPORT ${PROJECT_NAME}_Targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/direct_visual_lidar_calibration/
 )
 
-install(
-  TARGETS
-  preprocess_map
-  initial_guess_manual
-  initial_guess_auto
-  calibrate
-  viewer
-  DESTINATION
-  lib/${PROJECT_NAME}
+set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+install(EXPORT ${PROJECT_NAME}_Targets
+        FILE ${PROJECT_NAME}Targets.cmake
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION ${INSTALL_CONFIGDIR})
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
 )
 
-if($ENV{ROS_VERSION} EQUAL 1)
-  # ROS1
-else()
-  # ROS2
-  ament_python_install_package(${PROJECT_NAME})
-  install(PROGRAMS scripts/find_matches_superglue.py DESTINATION lib/${PROJECT_NAME})
-  ament_export_libraries(direct_visual_lidar_calibration)
-  ament_auto_package()
+configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
+    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
+)
+
+
+# install(
+#   TARGETS
+#   preprocess_map
+#   initial_guess_manual
+#   initial_guess_auto
+#   calibrate
+#   viewer
+#   DESTINATION
+#   lib/${PROJECT_NAME}
+# )
+
+if(ENABLE_ROS)
+    if($ENV{ROS_VERSION} EQUAL 1)
+      # ROS1
+    else()
+      # ROS2
+      ament_python_install_package(${PROJECT_NAME})
+      install(PROGRAMS scripts/find_matches_superglue.py DESTINATION lib/${PROJECT_NAME})
+      ament_export_libraries(direct_visual_lidar_calibration)
+      ament_auto_package()
+    endif()
 endif()
