@@ -84,7 +84,7 @@ void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_point
   values.insert(1, pred_T_odom_lidar_end);
 
   gtsam::NonlinearFactorGraph graph;
-  auto factor = boost::make_shared<IntegratedCT_GICPFactor_<iVox, Frame>>(0, 1, target_ivox, points, target_ivox);
+  auto factor = std::make_shared<IntegratedCT_GICPFactor_<iVox, Frame>>(0, 1, target_ivox, points, target_ivox);
   factor->set_num_threads(params.num_threads);
   graph.add(factor);
 
