@@ -76,10 +76,10 @@ target_include_directories(direct_visual_lidar_calibration PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/thirdparty/Sophus>
 
     $<INSTALL_INTERFACE:include>
-    $<INSTALL_INTERFACE:thirdparty/json/include>
-    $<INSTALL_INTERFACE:thirdparty/Bonxai/include>
-    $<INSTALL_INTERFACE:thirdparty/nanoflann/include>
-    $<INSTALL_INTERFACE:thirdparty/Sophus>
+    # $<INSTALL_INTERFACE:thirdparty/json/include>
+    # $<INSTALL_INTERFACE:thirdparty/Bonxai/include>
+    # $<INSTALL_INTERFACE:thirdparty/nanoflann/include>
+    # $<INSTALL_INTERFACE:thirdparty/Sophus>
 
     ${Boost_INCLUDE_DIRS}
     ${CERES_INCLUDE_DIRS}
@@ -144,13 +144,18 @@ target_sources(direct_visual_lidar_calibration PUBLIC
 
 
 target_link_libraries(direct_visual_lidar_calibration
-  fmt::fmt
-  ${Boost_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${CERES_LIBRARIES}
-  ${GTSAM_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  Iridescence::Iridescence
+    PRIVATE
+    ${CERES_LIBRARIES}
+    fmt::fmt
+)
+
+target_link_libraries(direct_visual_lidar_calibration
+    PUBLIC
+    ${Boost_LIBRARIES}
+    ${PCL_LIBRARIES}
+    ${GTSAM_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    Iridescence::Iridescence
 )
 
 
@@ -258,6 +263,21 @@ install(
   FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/direct_visual_lidar_calibration/
 )
 
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/Sophus/sophus/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/direct_visual_lidar_calibration/sophus
+)
+
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/json/include/nlohmann/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/direct_visual_lidar_calibration/nlohmann/
+)
+
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/nanoflann/include/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/direct_visual_lidar_calibration/
+)
+
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 install(EXPORT ${PROJECT_NAME}_Targets
         FILE ${PROJECT_NAME}Targets.cmake
@@ -276,6 +296,11 @@ configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.
     INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 )
 
+install(FILES
+    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    DESTINATION ${INSTALL_CONFIGDIR}
+)
 
 # install(
 #   TARGETS
