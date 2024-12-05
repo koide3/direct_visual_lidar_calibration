@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(direct_visual_lidar_calibration VERSION 0.0.1)
 
-add_compile_options(-std=c++17)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
+set(CMAKE_CXX_STANDARD 17)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
@@ -24,6 +24,9 @@ if(ENABLE_ROS)
     endif()
 endif()
 
+# For some reason vtk find errors because it is not attempting to find, but referencing
+# JsonCpp, when my temporary prefix is used lol
+find_package(JsonCpp REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(GTSAM REQUIRED)

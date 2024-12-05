@@ -2,6 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
+find_dependency(JsonCpp REQUIRED)
 find_dependency(PCL REQUIRED)
 find_dependency(Ceres REQUIRED)
 find_dependency(GTSAM REQUIRED)
