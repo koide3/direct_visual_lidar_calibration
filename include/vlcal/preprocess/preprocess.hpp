@@ -37,10 +37,9 @@ private:
   std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>>
   get_camera_params(const boost::program_options::variables_map& vm, const std::string& bag_filename, const std::string& camera_info_topic, const std::string& image_topic);
 
-  std::pair<cv::Mat, Frame::ConstPtr> get_image_and_points(
+  Frame::ConstPtr get_image_and_points(
     const boost::program_options::variables_map& vm,
     const std::string& bag_filename,
-    const std::string& image_topic,
     const std::string& points_topic,
     const std::string& intensity_channel,
     const int num_threads);

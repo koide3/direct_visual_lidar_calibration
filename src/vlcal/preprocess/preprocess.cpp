@@ -135,11 +135,11 @@ bool Preprocess::run(int argc, char** argv) {
   std::cout << "intensity_channel: " << intensity_channel << std::endl;
 
   // camera params
-  auto [camera_model, image_size, intrinsics, distortion_coeffs] = get_camera_params(vm, bag_filenames.front(), camera_info_topic, image_topic);
-  std::cout << "camera_model: " << camera_model << std::endl;
-  std::cout << "image_size  : " << image_size.width << " " << image_size.height << std::endl;
-  std::cout << "intrinsics  : " << Eigen::Map<const Eigen::VectorXd>(intrinsics.data(), intrinsics.size()).transpose() << std::endl;
-  std::cout << "dist_coeffs : " << Eigen::Map<const Eigen::VectorXd>(distortion_coeffs.data(), distortion_coeffs.size()).transpose() << std::endl;
+  /* auto [camera_model, image_size, intrinsics, distortion_coeffs] = get_camera_params(vm, bag_filenames.front(), camera_info_topic, image_topic); */
+  /* std::cout << "camera_model: " << camera_model << std::endl; */
+  /* std::cout << "image_size  : " << image_size.width << " " << image_size.height << std::endl; */
+  /* std::cout << "intrinsics  : " << Eigen::Map<const Eigen::VectorXd>(intrinsics.data(), intrinsics.size()).transpose() << std::endl; */
+  /* std::cout << "dist_coeffs : " << Eigen::Map<const Eigen::VectorXd>(distortion_coeffs.data(), distortion_coeffs.size()).transpose() << std::endl; */
 
   // process bags
   int num_threads_per_bag = omp_get_max_threads();
@@ -153,12 +153,11 @@ bool Preprocess::run(int argc, char** argv) {
     std::cout << "start processing " << bag_filenames[i] << std::endl;
 
     const auto& bag_filename = bag_filenames[i];
-    auto [image, points] = get_image_and_points(vm, bag_filename, image_topic, points_topic, intensity_channel, num_threads_per_bag);
+    auto points = get_image_and_points(vm, bag_filename, points_topic, intensity_channel, num_threads_per_bag);
 
     lidar_points[i] = points;
 
     const std::string bag_name = std::filesystem::path(bag_filename).filename();
-    cv::imwrite(dst_path + "/" + bag_name + ".png", image);
 
     glk::PLYData ply;
     ply.vertices.resize(points->size());
@@ -224,9 +223,9 @@ bool Preprocess::run(int argc, char** argv) {
   config["meta"]["points_topic"] = points_topic;
   config["meta"]["intensity_channel"] = intensity_channel;
   config["meta"]["bag_names"] = bag_names;
-  config["camera"]["camera_model"] = camera_model;
-  config["camera"]["intrinsics"] = intrinsics;
-  config["camera"]["distortion_coeffs"] = distortion_coeffs;
+  /* config["camera"]["camera_model"] = camera_model; */
+  /* config["camera"]["intrinsics"] = intrinsics; */
+  /* config["camera"]["distortion_coeffs"] = distortion_coeffs; */
 
   std::ofstream ofs(dst_path + "/calib.json");
   ofs << config.dump(2) << std::endl;
@@ -247,14 +246,14 @@ bool Preprocess::run(int argc, char** argv) {
 
     for (const auto& bag_filename : bag_filenames) {
       const std::string bag_name = std::filesystem::path(bag_filename).filename();
-      const cv::Mat image = cv::imread(dst_path + "/" + bag_name + ".png");
+      /* const cv::Mat image = cv::imread(dst_path + "/" + bag_name + ".png"); */
       const auto points = glk::load_ply(dst_path + "/" + bag_name + ".ply");
 
       auto cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points->vertices);
       cloud_buffer->add_intensity(glk::COLORMAP::TURBO, points->intensities);
 
       viewer->append_text(bag_filename);
-      viewer->update_image("image", glk::create_texture(image));
+      /* viewer->update_image("image", glk::create_texture(image)); */
       viewer->update_drawable("points", cloud_buffer, guik::VertexColor());
       viewer->spin_until_click();
     }
@@ -403,21 +402,13 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
   return {distortion_model, image_size, intrinsics, distortion_coeffs};
 }
 
-std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
+Frame::ConstPtr Preprocess::get_image_and_points(
   const boost::program_options::variables_map& vm,
   const std::string& bag_filename,
-  const std::string& image_topic,
   const std::string& points_topic,
   const std::string& intensity_channel,
   const int num_threads) {
   //
-  cv::Mat image = get_image(bag_filename, image_topic);
-  if (!image.data) {
-    std::cerr << vlcal::console::bold_red << "error: failed to obtain an image (image_topic=" << image_topic << ")" << vlcal::console::reset << std::endl;
-    abort();
-  }
-  cv::equalizeHist(image.clone(), image);
-
   // integrate points
   TimeKeeper time_keeper;
   std::unique_ptr<vlcal::PointCloudIntegrator> points_integrator;
@@ -472,7 +463,7 @@ std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
     points->intensities[indices[i]] = value;
   }
 
-  return {image, points};
+  return points;
 }
 
 }  // namespace vlcal

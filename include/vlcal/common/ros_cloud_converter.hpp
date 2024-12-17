@@ -82,11 +82,13 @@ static RawPoints::Ptr extract_raw_points(const PointCloud2& points_msg, const st
   fields["time"] = std::make_pair(&time_type, &time_offset);
   fields["time_stamp"] = std::make_pair(&time_type, &time_offset);
   fields["timestamp"] = std::make_pair(&time_type, &time_offset);
-  fields[intensity_channel] = std::make_pair(&intensity_type, &intensity_offset);
+  fields["reflectivity"] = std::make_pair(&intensity_type, &intensity_offset);
 
   for (const auto& field : points_msg.fields) {
+      std::cout << "finding field " << field.name << std::endl;
     auto found = fields.find(field.name);
     if (found == fields.end()) {
+      std::cout << "could not find " << field.name << std::endl;
       continue;
     }
 
