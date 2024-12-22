@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+#include <mutex>
 #include <thread>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -47,6 +48,7 @@ public:
   virtual Frame::ConstPtr get_points() override;
 
 private:
+
   void insert_points(const Frame::ConstPtr& raw_points, const gtsam::Pose3& T_odom_lidar_begin, const gtsam::Pose3& T_odom_lidar_end);
 
   void voxelgrid_task();
@@ -55,6 +57,8 @@ private:
   const DynamicPointCloudIntegratorParams params;
 
   std::mt19937 mt;
+
+  mutable std::mutex mtx_;
 
   gtsam::Pose3 last_T_odom_lidar_begin;
   gtsam::Pose3 last_T_odom_lidar_end;
