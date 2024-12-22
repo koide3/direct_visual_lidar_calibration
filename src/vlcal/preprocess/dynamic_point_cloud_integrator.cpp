@@ -35,6 +35,7 @@ DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloud
   last_T_odom_lidar_begin = gtsam::Pose3();
   last_T_odom_lidar_end = gtsam::Pose3();
 
+  // TODO: why are params not used here? why is this hardcoded?
   target_ivox.reset(new iVox(1.0, 0.05, 100));
 
   voxelgrid_thread = std::thread([this] { voxelgrid_task(); });
