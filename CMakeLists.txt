@@ -24,9 +24,6 @@ if(ENABLE_ROS)
     endif()
 endif()
 
-# For some reason vtk find errors because it is not attempting to find, but referencing
-# JsonCpp, when my temporary prefix is used lol
-# find_package(JsonCpp REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(GTSAM REQUIRED)
