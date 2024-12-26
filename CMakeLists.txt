@@ -3,8 +3,6 @@ project(direct_visual_lidar_calibration VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-add_compile_options(-fsanitize=alignment)
-add_link_options(-fsanitize=alignment)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
