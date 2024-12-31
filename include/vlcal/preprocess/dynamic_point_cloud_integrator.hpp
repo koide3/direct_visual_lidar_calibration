@@ -31,7 +31,7 @@ public:
   int k_neighbors;        ///< Number of neighbor points for covariance estimation
   int target_num_points;  ///< Target number of points for downsampling
 
-  double min_distance;      ///< Points closer than this will be discarded
+  double min_distance;      ///< Points closer to the sensor origin than this will be discarded
   double voxel_resolution;  ///< Dense target model downsampling resolution
 };
 

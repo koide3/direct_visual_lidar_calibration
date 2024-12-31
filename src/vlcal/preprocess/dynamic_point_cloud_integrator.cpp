@@ -35,6 +35,10 @@ DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloud
   last_T_odom_lidar_begin = gtsam::Pose3();
   last_T_odom_lidar_end = gtsam::Pose3();
 
+  // Note: voxel resolution is the container leaf resolution for the iVox search
+  // structure and not related to DynamicPointCloudIntegratorParams::voxel_resolution.
+  // Likewise, the insertion distance threshold is not
+  // DynamicPointCloudIntegratorParams::min_distance
   target_ivox.reset(new iVox(1, 0.05, 100));
 
   voxelgrid_thread = std::thread([this] { voxelgrid_task(); });
