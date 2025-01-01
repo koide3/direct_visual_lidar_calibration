@@ -34,6 +34,8 @@ public:
   FrameCPU();
   ~FrameCPU();
 
+  void set_scan_duration(double d) { this->scan_duration = d; }
+
   template <typename T>
   void add_times(const T* times, int num_points);
   template <typename T>
@@ -201,6 +203,5 @@ FrameCPU::Ptr transform(const Frame::ConstPtr& frame, const Eigen::Transform<Sca
  */
 template <typename Scalar, int Mode>
 void transform_inplace(Frame::Ptr& frame, const Eigen::Transform<Scalar, 3, Mode>& transformation);
-
 
 }  // namespace vlcal

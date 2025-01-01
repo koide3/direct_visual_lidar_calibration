@@ -52,9 +52,9 @@ DynamicPointCloudIntegrator::~DynamicPointCloudIntegrator() {
   }
 }
 
-void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_points_) {
-  auto raw_points = sort_by_time(raw_points_);
-  auto points = randomgrid_sampling(raw_points, 0.5, static_cast<double>(params.target_num_points) / raw_points->size(), mt);
+void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& frame) {
+  auto frame_sorted = sort_by_time(frame);
+  auto points = randomgrid_sampling(frame_sorted, 0.5, static_cast<double>(params.target_num_points) / frame_sorted->size(), mt);
 
   std::vector<int> neighbors(points->size() * params.k_neighbors);
 
@@ -75,11 +75,11 @@ void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_point
   if (!target_ivox->has_points()) {
     // Handling the first frame
     target_ivox->insert(*points);
-    alignment_results.push(std::make_tuple(raw_points, gtsam::Pose3(), gtsam::Pose3()));
+    alignment_results.push(std::make_tuple(frame_sorted, gtsam::Pose3(), gtsam::Pose3()));
     return;
   }
 
-  const double scan_duration = raw_points->times[raw_points->size() - 1];
+  const double scan_duration = frame_sorted->scan_duration > 0 ? frame_sorted->scan_duration : frame_sorted->times[frame_sorted->size() - 1];
   const gtsam::Vector6 pred_v_odom_lidar = gtsam::Pose3::Logmap(last_T_odom_lidar_begin.between(last_T_odom_lidar_end)) / scan_duration;
   const gtsam::Pose3 pred_T_odom_lidar_begin = last_T_odom_lidar_end;
   const gtsam::Pose3 pred_T_odom_lidar_end = last_T_odom_lidar_end * gtsam::Pose3::Expmap(0.75 * pred_v_odom_lidar * scan_duration);
@@ -114,7 +114,7 @@ void DynamicPointCloudIntegrator::insert_points(const Frame::ConstPtr& raw_point
   deskewed->add_intensities(points->intensities, points->size());
   target_ivox->insert(*deskewed);
 
-  alignment_results.push(std::make_tuple(raw_points, values.at<gtsam::Pose3>(0), values.at<gtsam::Pose3>(1)));
+  alignment_results.push(std::make_tuple(frame_sorted, values.at<gtsam::Pose3>(0), values.at<gtsam::Pose3>(1)));
 
   if (params.visualize) {
     auto viewer = guik::LightViewer::instance();

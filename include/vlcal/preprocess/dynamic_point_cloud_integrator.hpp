@@ -44,12 +44,11 @@ public:
   DynamicPointCloudIntegrator(const DynamicPointCloudIntegratorParams& params = DynamicPointCloudIntegratorParams());
   ~DynamicPointCloudIntegrator();
 
-  virtual void insert_points(const Frame::ConstPtr& raw_points) override;
+  virtual void insert_points(const Frame::ConstPtr& frame) override;
   virtual Frame::ConstPtr get_points() override;
 
 private:
-
-  void insert_points(const Frame::ConstPtr& raw_points, const gtsam::Pose3& T_odom_lidar_begin, const gtsam::Pose3& T_odom_lidar_end);
+  void insert_points(const Frame::ConstPtr& frame, const gtsam::Pose3& T_odom_lidar_begin, const gtsam::Pose3& T_odom_lidar_end);
 
   void voxelgrid_task();
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <unordered_map>
 #include <iostream>
 #include <Eigen/Core>
@@ -62,6 +61,7 @@ public:
 public:
   size_t num_points;  ///< Number of points
 
+  double scan_duration = -1; ///< duration of the scan in seconds
   double* times;             ///< Per-point timestamp w.r.t. the first point (should be sorted)
   Eigen::Vector4d* points;   ///< Point coordinates (x, y, z, 1)
   Eigen::Vector4d* normals;  ///< Point normals (nx, ny, nz, 0)
