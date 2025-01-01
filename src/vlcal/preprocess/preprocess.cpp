@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include <vlcal/preprocess/preprocess.hpp>
 
 #include <fstream>
@@ -119,6 +120,8 @@ bool Preprocess::run(int argc, char** argv) {
     }
   }
 
+  nlohmann::json meta_config;
+
   // topics
   // why omp causes errors for structured bindings?
   const auto topics = get_topics(vm, bag_filenames.front());
@@ -134,12 +137,18 @@ bool Preprocess::run(int argc, char** argv) {
   const std::string intensity_channel = get_intensity_channel(vm, bag_filenames.front(), points_topic);
   std::cout << "intensity_channel: " << intensity_channel << std::endl;
 
-  // camera params
-  auto [camera_model, image_size, intrinsics, distortion_coeffs] = get_camera_params(vm, bag_filenames.front(), camera_info_topic, image_topic);
-  std::cout << "camera_model: " << camera_model << std::endl;
-  std::cout << "image_size  : " << image_size.width << " " << image_size.height << std::endl;
-  std::cout << "intrinsics  : " << Eigen::Map<const Eigen::VectorXd>(intrinsics.data(), intrinsics.size()).transpose() << std::endl;
-  std::cout << "dist_coeffs : " << Eigen::Map<const Eigen::VectorXd>(distortion_coeffs.data(), distortion_coeffs.size()).transpose() << std::endl;
+  if (!image_topic.empty()) {
+    // camera params
+    auto [camera_model, image_size, intrinsics, distortion_coeffs] = get_camera_params(vm, bag_filenames.front(), camera_info_topic, image_topic);
+    std::cout << "camera_model: " << camera_model << std::endl;
+    std::cout << "image_size  : " << image_size.width << " " << image_size.height << std::endl;
+    std::cout << "intrinsics  : " << Eigen::Map<const Eigen::VectorXd>(intrinsics.data(), intrinsics.size()).transpose() << std::endl;
+    std::cout << "dist_coeffs : " << Eigen::Map<const Eigen::VectorXd>(distortion_coeffs.data(), distortion_coeffs.size()).transpose() << std::endl;
+
+    meta_config["camera"]["camera_model"] = camera_model;
+    meta_config["camera"]["intrinsics"] = intrinsics;
+    meta_config["camera"]["distortion_coeffs"] = distortion_coeffs;
+  }
 
   // process bags
   int num_threads_per_bag = omp_get_max_threads();
@@ -155,81 +164,80 @@ bool Preprocess::run(int argc, char** argv) {
     const auto& bag_filename = bag_filenames[i];
     auto [image, points] = get_image_and_points(vm, bag_filename, image_topic, points_topic, intensity_channel, num_threads_per_bag);
 
-    lidar_points[i] = points;
+    if (image) {
+      cv::imwrite(dst_path + "/" + bag_filename + ".png", *image);
+    }
 
-    const std::string bag_name = std::filesystem::path(bag_filename).filename();
-    cv::imwrite(dst_path + "/" + bag_name + ".png", image);
+    if (points) {
+      Frame::ConstPtr frame = *points;
+      lidar_points[i] = frame;
 
-    glk::PLYData ply;
-    ply.vertices.resize(points->size());
-    ply.intensities.resize(points->size());
+      glk::PLYData ply;
+      ply.vertices.resize(frame->size());
+      ply.intensities.resize(frame->size());
 
-    std::transform(points->points, points->points + points->size(), ply.vertices.begin(), [](const Eigen::Vector4d& p) { return p.cast<float>().head<3>(); });
-    std::copy(points->intensities, points->intensities + points->size(), ply.intensities.begin());
-    glk::save_ply_binary(dst_path + "/" + bag_name + ".ply", ply);
+      std::transform(frame->points, frame->points + frame->size(), ply.vertices.begin(), [](const Eigen::Vector4d& p) { return p.cast<float>().head<3>(); });
+      std::copy(frame->intensities, frame->intensities + frame->size(), ply.intensities.begin());
+      glk::save_ply_binary(dst_path + "/" + bag_filename + ".ply", ply);
 
-    std::cout << "processed " << bag_filename << std::endl;
+      std::cout << "processed " << bag_filename << std::endl;
+    }
   }
 
   std::cout << "lidar_points:" << lidar_points.size() << std::endl;
-  std::cout << "lidar_points[0]:" << lidar_points.front()->size() << std::endl;
+  if (lidar_points.size() > 0) {
+    std::cout << "lidar_points[0]:" << lidar_points.front()->size() << std::endl;
+    // Generate LiDAR images
+    const double lidar_fov = vlcal::estimate_lidar_fov(lidar_points.front());
+    std::cout << "LiDAR FoV: " << lidar_fov * 180.0 / M_PI << "[deg]" << std::endl;
+    Eigen::Vector2i lidar_image_size;
+    std::string lidar_camera_model;
+    std::vector<double> lidar_camera_intrinsics;
 
-  // Generate LiDAR images
-  const double lidar_fov = vlcal::estimate_lidar_fov(lidar_points.front());
-  std::cout << "LiDAR FoV: " << lidar_fov * 180.0 / M_PI << "[deg]" << std::endl;
-  Eigen::Vector2i lidar_image_size;
-  std::string lidar_camera_model;
-  std::vector<double> lidar_camera_intrinsics;
+    Eigen::Isometry3d T_lidar_camera = Eigen::Isometry3d::Identity();
 
-  Eigen::Isometry3d T_lidar_camera = Eigen::Isometry3d::Identity();
+    if (lidar_fov < 150.0 * M_PI / 180.0) {
+      lidar_image_size = {1024, 1024};
+      T_lidar_camera.linear() = (Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitZ())).toRotationMatrix();
+      const double fx = lidar_image_size.x() / (2.0 * std::tan(lidar_fov / 2.0));
+      lidar_camera_model = "plumb_bob";
+      lidar_camera_intrinsics = {fx, fx, lidar_image_size[0] / 2.0, lidar_image_size[1] / 2.0};
+    } else {
+      lidar_image_size = {1920, 960};
+      T_lidar_camera.linear() = (Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitX())).toRotationMatrix();
+      lidar_camera_model = "equirectangular";
+      lidar_camera_intrinsics = {static_cast<double>(lidar_image_size[0]), static_cast<double>(lidar_image_size[1])};
+    }
 
-  if (lidar_fov < 150.0 * M_PI / 180.0) {
-    lidar_image_size = {1024, 1024};
-    T_lidar_camera.linear() = (Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitZ())).toRotationMatrix();
-    const double fx = lidar_image_size.x() / (2.0 * std::tan(lidar_fov / 2.0));
-    lidar_camera_model = "plumb_bob";
-    lidar_camera_intrinsics = {fx, fx, lidar_image_size[0] / 2.0, lidar_image_size[1] / 2.0};
-  } else {
-    lidar_image_size = {1920, 960};
-    T_lidar_camera.linear() = (Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d::UnitX())).toRotationMatrix();
-    lidar_camera_model = "equirectangular";
-    lidar_camera_intrinsics = {static_cast<double>(lidar_image_size[0]), static_cast<double>(lidar_image_size[1])};
-  }
+    auto lidar_proj = camera::create_camera(lidar_camera_model, lidar_camera_intrinsics, {});
 
-  auto lidar_proj = camera::create_camera(lidar_camera_model, lidar_camera_intrinsics, {});
-
-  std::cout << "save LiDAR images" << std::endl;
+    std::cout << "save LiDAR images" << std::endl;
 #pragma omp parallel for
-  for (int i = 0; i < bag_filenames.size(); i++) {
-    const std::string bag_name = std::filesystem::path(bag_filenames[i]).filename();
-    auto [intensities, indices] = vlcal::generate_lidar_image(lidar_proj, lidar_image_size, T_lidar_camera.inverse(), lidar_points[i]);
+    for (int i = 0; i < bag_filenames.size(); i++) {
+      const std::string bag_name = std::filesystem::path(bag_filenames[i]).filename();
+      auto [intensities, indices] = vlcal::generate_lidar_image(lidar_proj, lidar_image_size, T_lidar_camera.inverse(), lidar_points[i]);
 
-    cv::Mat indices_8uc4(indices.rows, indices.cols, CV_8UC4, reinterpret_cast<cv::Vec4b*>(indices.data));
+      cv::Mat indices_8uc4(indices.rows, indices.cols, CV_8UC4, reinterpret_cast<cv::Vec4b*>(indices.data));
 
-    intensities.clone().convertTo(intensities, CV_8UC1, 255.0);
-    cv::imwrite(dst_path + "/" + bag_name + "_lidar_intensities.png", intensities);
-    cv::imwrite(dst_path + "/" + bag_name + "_lidar_indices.png", indices_8uc4);
+      intensities.clone().convertTo(intensities, CV_8UC1, 255.0);
+      cv::imwrite(dst_path + "/" + bag_name + "_lidar_intensities.png", intensities);
+      cv::imwrite(dst_path + "/" + bag_name + "_lidar_indices.png", indices_8uc4);
+    }
   }
 
   //
   std::vector<std::string> bag_names(bag_filenames);
   std::transform(bag_filenames.begin(), bag_filenames.end(), bag_names.begin(), [](const auto& path) { return std::filesystem::path(path).filename(); });
 
-  std::cout << "save meta data" << std::endl;
-
-  nlohmann::json config;
-  config["meta"]["data_path"] = data_path;
-  config["meta"]["camera_info_topic"] = camera_info_topic;
-  config["meta"]["image_topic"] = image_topic;
-  config["meta"]["points_topic"] = points_topic;
-  config["meta"]["intensity_channel"] = intensity_channel;
-  config["meta"]["bag_names"] = bag_names;
-  config["camera"]["camera_model"] = camera_model;
-  config["camera"]["intrinsics"] = intrinsics;
-  config["camera"]["distortion_coeffs"] = distortion_coeffs;
+  meta_config["meta"]["data_path"] = data_path;
+  meta_config["meta"]["camera_info_topic"] = camera_info_topic;
+  meta_config["meta"]["image_topic"] = image_topic;
+  meta_config["meta"]["points_topic"] = points_topic;
+  meta_config["meta"]["intensity_channel"] = intensity_channel;
+  meta_config["meta"]["bag_names"] = bag_names;
 
   std::ofstream ofs(dst_path + "/calib.json");
-  ofs << config.dump(2) << std::endl;
+  ofs << meta_config.dump(2) << std::endl;
 
   if (vm.count("visualize")) {
     auto viewer = guik::LightViewer::instance();
@@ -248,13 +256,17 @@ bool Preprocess::run(int argc, char** argv) {
     for (const auto& bag_filename : bag_filenames) {
       const std::string bag_name = std::filesystem::path(bag_filename).filename();
       const cv::Mat image = cv::imread(dst_path + "/" + bag_name + ".png");
-      const auto points = glk::load_ply(dst_path + "/" + bag_name + ".ply");
 
+      if (!image.empty()) {
+        viewer->update_image("image", glk::create_texture(image));
+      }
+
+      const auto points = glk::load_ply(dst_path + "/" + bag_name + ".ply");
+      // if (points) ?
       auto cloud_buffer = std::make_shared<glk::PointCloudBuffer>(points->vertices);
       cloud_buffer->add_intensity(glk::COLORMAP::TURBO, points->intensities);
 
       viewer->append_text(bag_filename);
-      viewer->update_image("image", glk::create_texture(image));
       viewer->update_drawable("points", cloud_buffer, guik::VertexColor());
       viewer->spin_until_click();
     }
@@ -369,7 +381,7 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
       }
       std::cerr << vlcal::console::bold_red << "     : supported camera models are" << sst.str() << vlcal::console::reset << std::endl;
 
-      abort();
+      throw std::invalid_argument("error: invalid camera model " + camera_model);
     }
 
     std::vector<double> intrinsics;
@@ -378,10 +390,12 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
       intrinsics = {static_cast<double>(image_size.width), static_cast<double>(image_size.height)};
     } else {
       if (!vm.count("camera_intrinsics")) {
-        std::cerr << vlcal::console::bold_red << "error: camera_intrinsics has not been set!!" << vlcal::console::reset << std::endl;
+        std::cerr << vlcal::console::bold_red << "error: camera_intrinsics have not been set!" << vlcal::console::reset << std::endl;
+        throw std::invalid_argument("error: camera_intrinsics have not been set!");
       }
       if (!vm.count("camera_distortion_coeffs")) {
-        std::cerr << vlcal::console::bold_red << "error: camera_distortion_coeffs has not been set!!" << vlcal::console::reset << std::endl;
+        std::cerr << vlcal::console::bold_red << "error: camera_distortion_coeffs have not been set!" << vlcal::console::reset << std::endl;
+        throw std::invalid_argument("error: camera_distortion_coeffs have not been set!");
       }
 
       std::vector<std::string> intrinsic_tokens;
@@ -398,26 +412,27 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
     return {camera_model, image_size, intrinsics, distortion_coeffs};
   }
 
-  std::cout << "try to get the camera model automatically" << std::endl;
+  std::cout << "trying to get the camera model automatically" << std::endl;
   auto [distortion_model, intrinsics, distortion_coeffs] = get_camera_info(bag_filename, camera_info_topic);
   return {distortion_model, image_size, intrinsics, distortion_coeffs};
 }
 
-std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
+cv::Mat Preprocess::get_image_equalize(const std::string& bag_filename, const std::string& image_topic) {
+  cv::Mat image = get_image(bag_filename, image_topic);
+  if (!image.data) {
+    throw std::invalid_argument("Could not obtain image from bag");
+  }
+  cv::equalizeHist(image.clone(), image);
+  return image;
+}
+
+Frame::ConstPtr Preprocess::get_points_equalize(
   const boost::program_options::variables_map& vm,
   const std::string& bag_filename,
-  const std::string& image_topic,
   const std::string& points_topic,
   const std::string& intensity_channel,
   const int num_threads) {
   //
-  cv::Mat image = get_image(bag_filename, image_topic);
-  if (!image.data) {
-    std::cerr << vlcal::console::bold_red << "error: failed to obtain an image (image_topic=" << image_topic << ")" << vlcal::console::reset << std::endl;
-    abort();
-  }
-  cv::equalizeHist(image.clone(), image);
-
   // integrate points
   TimeKeeper time_keeper;
   std::unique_ptr<vlcal::PointCloudIntegrator> points_integrator;
@@ -447,7 +462,7 @@ std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
     }
 
     if (!time_keeper.process(raw_points)) {
-      std::cerr << vlcal::console::yellow << "warning: skip frame with an invalid timestamp!!" << vlcal::console::reset << std::endl;
+      std::cerr << vlcal::console::yellow << "warning: skipping frame with an invalid timestamp!" << vlcal::console::reset << std::endl;
       continue;
     }
 
@@ -470,6 +485,31 @@ std::pair<cv::Mat, Frame::ConstPtr> Preprocess::get_image_and_points(
   for (int i = 0; i < indices.size(); i++) {
     const double value = std::floor(bins * static_cast<double>(i) / indices.size()) / bins;
     points->intensities[indices[i]] = value;
+  }
+
+  return points;
+}
+
+std::pair<std::optional<cv::Mat>, std::optional<Frame::ConstPtr>> Preprocess::get_image_and_points(
+  const boost::program_options::variables_map& vm,
+  const std::string& bag_filename,
+  const std::string& image_topic,
+  const std::string& points_topic,
+  const std::string& intensity_channel,
+  const int num_threads) {
+  std::optional<cv::Mat> image = std::nullopt;
+
+  try {
+    image = get_image_equalize(bag_filename, image_topic);
+  } catch (const std::invalid_argument&) {
+    // no image loadable
+  }
+
+  std::optional<Frame::ConstPtr> points = std::nullopt;
+  try {
+    points = get_points_equalize(vm, bag_filename, points_topic, intensity_channel, num_threads);
+  } catch (const std::invalid_argument&) {
+    // no image loadable
   }
 
   return {image, points};

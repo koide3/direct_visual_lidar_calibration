@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(direct_visual_lidar_calibration VERSION 0.0.1)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -25,13 +26,13 @@ if(ENABLE_ROS)
     endif()
 endif()
 
-# For some reason vtk find errors because it is not attempting to find, but referencing
-# JsonCpp, when my temporary prefix is used lol
-find_package(JsonCpp REQUIRED)
-find_package(PCL REQUIRED)
+find_package(PCL REQUIRED COMPONENTS io surface sample_consensus filters)
 find_package(Ceres REQUIRED)
 find_package(GTSAM REQUIRED)
-find_package(OpenCV REQUIRED)
+# Bug in OpenCV (at least some versions): Because it does not find VTK correctly for
+# some module or another, we get a seemingly unrelated error when finding PCL.
+# Therefore, only find the actually needed modules
+find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 find_package(Iridescence REQUIRED)
 find_package(fmt REQUIRED)

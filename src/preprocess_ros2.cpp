@@ -28,6 +28,7 @@ public:
   PointCloudReaderROS2(const std::string& bag_filename, const std::string& points_topic, const std::string& intensity_channel) : intensity_channel(intensity_channel) {
     reader.open(bag_filename);
 
+
     rosbag2_storage::StorageFilter filter;
     filter.topics.push_back(points_topic);
     reader.set_filter(filter);
@@ -103,49 +104,49 @@ protected:
     return topics_and_types;
   }
 
-  virtual std::vector<std::string> get_point_fields(const std::string& bag_filename, const std::string& points_topic) override {
-    const auto msg = get_first_message<sensor_msgs::msg::PointCloud2>(bag_filename, points_topic);
-    std::vector<std::string> fields(msg->fields.size());
-    std::transform(msg->fields.begin(), msg->fields.end(), fields.begin(), [](const auto& field) { return field.name; });
-    return fields;
-  }
+virtual std::vector<std::string> get_point_fields(const std::string& bag_filename, const std::string& points_topic) override {
+const auto msg = get_first_message<sensor_msgs::msg::PointCloud2>(bag_filename, points_topic);
+std::vector<std::string> fields(msg->fields.size());
+std::transform(msg->fields.begin(), msg->fields.end(), fields.begin(), [](const auto& field) { return field.name; });
+return fields;
+}
 
-  virtual cv::Size get_image_size(const std::string& bag_filename, const std::string& image_topic) override {
-    if (image_topic.find("compressed") == std::string::npos) {
-      const auto image_msg = get_first_message<sensor_msgs::msg::Image>(bag_filename, image_topic);
-      return cv::Size(image_msg->width, image_msg->height);
-    }
+virtual cv::Size get_image_size(const std::string& bag_filename, const std::string& image_topic) override {
+if (image_topic.find("compressed") == std::string::npos) {
+  const auto image_msg = get_first_message<sensor_msgs::msg::Image>(bag_filename, image_topic);
+  return cv::Size(image_msg->width, image_msg->height);
+}
 
-    const auto image_msg = get_first_message<sensor_msgs::msg::CompressedImage>(bag_filename, image_topic);
-    return cv_bridge::toCvCopy(*image_msg, "mono8")->image.size();
-  }
+const auto image_msg = get_first_message<sensor_msgs::msg::CompressedImage>(bag_filename, image_topic);
+return cv_bridge::toCvCopy(*image_msg, "mono8")->image.size();
+}
 
-  virtual std::tuple<std::string, std::vector<double>, std::vector<double>> get_camera_info(const std::string& bag_filename, const std::string& camera_info_topic) override {
-    const auto camera_info_msg = get_first_message<sensor_msgs::msg::CameraInfo>(bag_filename, camera_info_topic);
-    std::vector<double> intrinsic(4);
-    intrinsic[0] = camera_info_msg->k[0];
-    intrinsic[1] = camera_info_msg->k[4];
-    intrinsic[2] = camera_info_msg->k[2];
-    intrinsic[3] = camera_info_msg->k[5];
-    std::vector<double> distortion_coeffs = camera_info_msg->d;
+virtual std::tuple<std::string, std::vector<double>, std::vector<double>> get_camera_info(const std::string& bag_filename, const std::string& camera_info_topic) override {
+const auto camera_info_msg = get_first_message<sensor_msgs::msg::CameraInfo>(bag_filename, camera_info_topic);
+std::vector<double> intrinsic(4);
+intrinsic[0] = camera_info_msg->k[0];
+intrinsic[1] = camera_info_msg->k[4];
+intrinsic[2] = camera_info_msg->k[2];
+intrinsic[3] = camera_info_msg->k[5];
+std::vector<double> distortion_coeffs = camera_info_msg->d;
 
-    return {camera_info_msg->distortion_model, intrinsic, distortion_coeffs};
-  }
+return {camera_info_msg->distortion_model, intrinsic, distortion_coeffs};
+}
 
-  virtual cv::Mat get_image(const std::string& bag_filename, const std::string& image_topic) override {
-    if (image_topic.find("compressed") == std::string::npos) {
-      const auto image_msg = get_first_message<sensor_msgs::msg::Image>(bag_filename, image_topic);
-      return cv_bridge::toCvCopy(*image_msg, "mono8")->image;
-    }
+virtual cv::Mat get_image(const std::string& bag_filename, const std::string& image_topic) override {
+if (image_topic.find("compressed") == std::string::npos) {
+  const auto image_msg = get_first_message<sensor_msgs::msg::Image>(bag_filename, image_topic);
+  return cv_bridge::toCvCopy(*image_msg, "mono8")->image;
+}
 
-    const auto image_msg = get_first_message<sensor_msgs::msg::CompressedImage>(bag_filename, image_topic);
-    return cv_bridge::toCvCopy(*image_msg, "mono8")->image;
-  }
+const auto image_msg = get_first_message<sensor_msgs::msg::CompressedImage>(bag_filename, image_topic);
+return cv_bridge::toCvCopy(*image_msg, "mono8")->image;
+}
 
-  virtual std::shared_ptr<PointCloudReader> get_point_cloud_reader(const std::string& bag_filename, const std::string& points_topic, const std::string& intensity_channel)
-    override {
-    return std::make_shared<PointCloudReaderROS2>(bag_filename, points_topic, intensity_channel);
-  }
+virtual std::shared_ptr<PointCloudReader> get_point_cloud_reader(const std::string& bag_filename, const std::string& points_topic, const std::string& intensity_channel)
+override {
+return std::make_shared<PointCloudReaderROS2>(bag_filename, points_topic, intensity_channel);
+}
 };
 
 }  // namespace vlcal
