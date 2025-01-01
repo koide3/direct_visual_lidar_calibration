@@ -29,7 +29,8 @@ DynamicPointCloudIntegratorParams::DynamicPointCloudIntegratorParams() {
   min_distance = 1.0;
 }
 
-DynamicPointCloudIntegratorParams::~DynamicPointCloudIntegratorParams() {}
+DynamicPointCloudIntegratorParams::~DynamicPointCloudIntegratorParams() {
+}
 
 DynamicPointCloudIntegrator::DynamicPointCloudIntegrator(const DynamicPointCloudIntegratorParams& params) : params(params) {
   last_T_odom_lidar_begin = gtsam::Pose3();
@@ -155,7 +156,9 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
       }
 
       const Eigen::Vector3i coord = (pt / params.voxel_resolution).array().floor().cast<int>().head<3>();
+      mtx_.lock();
       voxelgrid[coord] = Eigen::Vector4d(pt[0], pt[1], pt[2], raw_points->intensities[i]);
+      mtx_.unlock();
     }
 
     /*
@@ -177,12 +180,13 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
 }
 
 Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
-  alignment_results.submit_end_of_data();
-  voxelgrid_thread.join();
+  // alignment_results.submit_end_of_data();
+  // voxelgrid_thread.join();
 
   std::vector<Eigen::Vector3f> points;
   std::vector<float> intensities;
 
+  mtx_.lock();
   points.reserve(voxelgrid.size());
   intensities.reserve(voxelgrid.size());
 
@@ -190,6 +194,7 @@ Frame::ConstPtr DynamicPointCloudIntegrator::get_points() {
     points.emplace_back(voxel.second.cast<float>().head<3>());
     intensities.emplace_back(voxel.second.w());
   }
+  mtx_.unlock();
 
   auto frame = std::make_shared<FrameCPU>(points);
   frame->add_intensities(intensities);
