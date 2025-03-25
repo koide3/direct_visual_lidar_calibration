@@ -7,6 +7,7 @@
 #include <camera/fisheye.hpp>
 #include <camera/omnidir.hpp>
 #include <camera/equirectangular.hpp>
+#include <camera/rational_polynomial.hpp>
 #include <camera/generic_camera.hpp>
 
 #include <vlcal/common/console_colors.hpp>
@@ -41,6 +42,8 @@ camera::GenericCameraBase::ConstPtr create_camera(const std::string& camera_mode
     return create_camera<camera::OmnidirectionalProjection>(intrinsics, distortion_coeffs);
   } else if (camera_model == "equirectangular") {
     return create_camera<camera::EquirectangularProjection>(intrinsics, distortion_coeffs);
+  } else if (camera_model == "rational_polynomial") {
+    return create_camera<camera::RationalPolynomialProjection>(intrinsics, distortion_coeffs);
   }
 
   std::cerr << vlcal::console::bold_red << "error: unknown camera model " << camera_model << vlcal::console::reset << std::endl;
