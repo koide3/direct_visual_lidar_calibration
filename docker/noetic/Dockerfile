@@ -37,7 +37,7 @@ RUN apt-fast update && \
   apt-fast clean && \
   rm -rf /var/lib/apt/lists/*
 
-RUN /bin/bash -c ". /opt/ros/noetic/setup.bash; catkin_make"
+RUN /bin/bash -c ". /opt/ros/noetic/setup.bash; catkin_make -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 
 RUN echo "#!/bin/bash" >> /ros_entrypoint.sh \
   && echo "set -e" >> /ros_entrypoint.sh \
