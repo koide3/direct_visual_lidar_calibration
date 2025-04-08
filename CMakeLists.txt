@@ -69,7 +69,6 @@ target_include_directories(direct_visual_lidar_calibration PUBLIC
   thirdparty/Sophus
   ${Boost_INCLUDE_DIRS}
   ${CERES_INCLUDE_DIRS}
-  ${GTSAM_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
@@ -78,9 +77,9 @@ target_link_libraries(direct_visual_lidar_calibration
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
   ${CERES_LIBRARIES}
-  ${GTSAM_LIBRARIES}
   ${OpenCV_LIBRARIES}
   Iridescence::Iridescence
+  gtsam
 )
 
 
