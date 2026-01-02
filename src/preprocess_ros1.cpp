@@ -51,7 +51,7 @@ private:
 class PreprocessROS1 : public Preprocess {
 protected:
   template <typename T>
-  boost::shared_ptr<T> get_first_message(const std::string& bag_filename, const std::string& topic) const {
+  std::shared_ptr<T> get_first_message(const std::string& bag_filename, const std::string& topic) const {
     rosbag::Bag bag(bag_filename);
     rosbag::View view(bag, rosbag::TopicQuery(topic));
 
@@ -97,7 +97,7 @@ protected:
 
   virtual cv::Size get_image_size(const std::string& bag_filename, const std::string& image_topic) override {
     const auto image_msg = get_first_message<sensor_msgs::Image>(bag_filename, image_topic);
-    if(image_msg) {
+    if (image_msg) {
       return cv::Size(image_msg->width, image_msg->height);
     }
 

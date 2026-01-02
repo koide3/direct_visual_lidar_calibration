@@ -20,7 +20,7 @@ template <typename TargetFrame = Frame, typename SourceFrame = Frame>
 class IntegratedCT_ICPFactor_ : public gtsam::NonlinearFactor {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using shared_ptr = boost::shared_ptr<IntegratedCT_ICPFactor_<TargetFrame, SourceFrame>>;
+  using shared_ptr = std::shared_ptr<IntegratedCT_ICPFactor_<TargetFrame, SourceFrame>>;
 
   /**
    * @brief Constructor
@@ -54,7 +54,7 @@ public:
 
   virtual size_t dim() const override { return 6; }
   virtual double error(const gtsam::Values& values) const override;
-  virtual boost::shared_ptr<gtsam::GaussianFactor> linearize(const gtsam::Values& values) const override;
+  virtual std::shared_ptr<gtsam::GaussianFactor> linearize(const gtsam::Values& values) const override;
 
   void set_num_threads(int n) { num_threads = n; }
   void set_max_corresponding_distance(double dist) { max_correspondence_distance_sq = dist * dist; }
