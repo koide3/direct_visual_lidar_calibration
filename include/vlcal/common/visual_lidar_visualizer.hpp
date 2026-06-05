@@ -53,6 +53,7 @@ private:
 
   int selected_bag_id;
   float blend_weight;
+  float point_scale;
 
   std::mutex updater_mutex;
   std::unique_ptr<PointsColorUpdater> sphere_updater;

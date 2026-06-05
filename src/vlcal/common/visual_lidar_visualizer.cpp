@@ -25,6 +25,7 @@ VisualLiDARVisualizer::VisualLiDARVisualizer(
 
   selected_bag_id = -1;
   blend_weight = 0.7f;
+  point_scale = 1.0f;
   viewer->register_ui_callback("ui", [this] { ui_callback(); });
 
   kill_switch = false;
@@ -55,7 +56,7 @@ void VisualLiDARVisualizer::ui_callback() {
   if (prev_selected_bag_id != selected_bag_id) {
     std::lock_guard<std::mutex> lock(updater_mutex);
     color_updater.reset(new PointsColorUpdater(proj, dataset[selected_bag_id]->image, dataset[selected_bag_id]->points));
-    viewer->update_drawable("points", color_updater->cloud_buffer, guik::VertexColor());
+    viewer->update_drawable("points", color_updater->cloud_buffer, guik::VertexColor().set_point_scale(point_scale));
 
     if (draw_sphere) {
       sphere_updater.reset(new PointsColorUpdater(proj, dataset[selected_bag_id]->image));
@@ -73,6 +74,14 @@ void VisualLiDARVisualizer::ui_callback() {
     }
   }
   ImGui::DragFloat("blend_weight", &blend_weight, 0.01f, 0.0f, 1.0f);
+
+  const float prev_point_scale = point_scale;
+  ImGui::DragFloat("point_size", &point_scale, 0.01f, 0.01f, 5.0f);
+  point_scale = std::max(0.01f, point_scale);
+  if (prev_point_scale != point_scale && color_updater) {
+    std::lock_guard<std::mutex> lock(updater_mutex);
+    viewer->update_drawable("points", color_updater->cloud_buffer, guik::VertexColor().set_point_scale(point_scale));
+  }
 
   ImGui::End();
 }
