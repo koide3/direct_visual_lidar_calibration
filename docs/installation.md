@@ -24,7 +24,7 @@ sudo apt install libomp-dev libboost-all-dev libglm-dev libglfw3-dev libpng-dev 
 
 # Install GTSAM
 git clone https://github.com/borglab/gtsam
-cd gtsam && git checkout 4.2a9
+cd gtsam && git checkout 4.3a1
 mkdir build && cd build
 # For Ubuntu 22.04, add -DGTSAM_USE_SYSTEM_EIGEN=ON
 cmake .. -DGTSAM_BUILD_EXAMPLES_ALWAYS=OFF \

@@ -22,7 +22,7 @@ endif()
 
 find_package(PCL REQUIRED)
 find_package(Ceres REQUIRED)
-find_package(GTSAM REQUIRED)
+find_package(GTSAM CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options date_time)
 find_package(Iridescence REQUIRED)
@@ -69,7 +69,6 @@ target_include_directories(direct_visual_lidar_calibration PUBLIC
   thirdparty/Sophus
   ${Boost_INCLUDE_DIRS}
   ${CERES_INCLUDE_DIRS}
-  ${GTSAM_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
@@ -78,7 +77,7 @@ target_link_libraries(direct_visual_lidar_calibration
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
   ${CERES_LIBRARIES}
-  ${GTSAM_LIBRARIES}
+  gtsam
   ${OpenCV_LIBRARIES}
   Iridescence::Iridescence
 )
