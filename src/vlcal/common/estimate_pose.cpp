@@ -13,7 +13,7 @@
 
 namespace vlcal {
 
-PoseEstimation::PoseEstimation(const PoseEstimationParams& params) {}
+PoseEstimation::PoseEstimation(const PoseEstimationParams& params) : params(params) {}
 
 PoseEstimation::~PoseEstimation() {}
 
@@ -141,17 +141,16 @@ Eigen::Matrix3d PoseEstimation::estimate_rotation_ransac(
     }
   }
 
-  return best_R_camera_lidar.topLeftCorner<3, 3>(0, 0);
+  return best_R_camera_lidar.topLeftCorner<3, 3>();
 }
-
 
 Eigen::Isometry3d PoseEstimation::estimate_pose_lsq(
   const camera::GenericCameraBase::ConstPtr& proj,
   const std::vector<std::pair<Eigen::Vector2d, Eigen::Vector4d>>& correspondences,
   const Eigen::Isometry3d& init_T_camera_lidar) {
-  // 
+  //
   Sophus::SE3d T_camera_lidar = Sophus::SE3d(init_T_camera_lidar.matrix());
-  
+
   ceres::Problem problem;
   problem.AddParameterBlock(T_camera_lidar.data(), Sophus::SE3d::num_parameters, new Sophus::Manifold<Sophus::SE3>());
   // The default ceres (2.0.0) on Ubuntu 20.04 does not have manifold.hpp yet

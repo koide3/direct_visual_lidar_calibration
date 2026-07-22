@@ -54,6 +54,8 @@ bool Preprocess::run(int argc, char** argv) {
     ("camera_model", value<std::string>()->default_value("auto"), "auto, atan, plumb_bob, fisheye(=equidistant), omnidir, or equirectangular")
     ("camera_intrinsics", value<std::string>(), "camera intrinsic parameters [fx,fy,cx,cy(,xi)] (don't put spaces between values!!)")
     ("camera_distortion_coeffs", value<std::string>(), "camera distortion parameters [k1,k2,p1,p2,k3] (don't put spaces between values!!)")
+    ("camera_intrinsics_file", value<std::string>(), "path to a CSV or space-separated file that contains camera intrinsic parameters ([fx,fy,cx,cy(,xi) or 3x3 matrix])")
+    ("camera_distortion_coeffs_file", value<std::string>(), "path to a CSV or space-separated file that contains camera distortion parameters ([k1,k2,p1,p2,k3])")
     ("k_neighbors", value<int>()->default_value(20), "num of neighbor points used for point covariance estimation of CT-ICP")
     ("voxel_resolution", value<double>()->default_value(0.002), "voxel grid resolution")
     ("min_distance", value<double>()->default_value(1.0), "minimum point distance. Points closer than this value will be discarded")
@@ -377,22 +379,107 @@ std::tuple<std::string, cv::Size, std::vector<double>, std::vector<double>> Prep
     if (camera_model == "equirectangular") {
       intrinsics = {static_cast<double>(image_size.width), static_cast<double>(image_size.height)};
     } else {
-      if (!vm.count("camera_intrinsics")) {
+      const auto read_from_file = [](const std::string& filename) -> Eigen::MatrixXd {
+        std::cerr << "reading parameters from " << filename << std::endl;
+
+        std::ifstream ifs(filename);
+        if (!ifs.is_open()) {
+          std::cerr << vlcal::console::bold_red << "error: failed to open " << filename << vlcal::console::reset << std::endl;
+          abort();
+        }
+
+        std::vector<Eigen::VectorXd> rows;
+
+        bool csv = false;  // if true, values are separated by commas, otherwise by spaces
+        std::string line;
+        while (!ifs.eof() && std::getline(ifs, line) && !line.empty()) {
+          if (line[0] == '#') {
+            continue;
+          }
+
+          csv = line.find(',') != std::string::npos;
+
+          std::vector<std::string> tokens;
+          boost::split(tokens, line, boost::is_any_of(csv ? "," : " "));
+
+          Eigen::VectorXd row(tokens.size());
+          std::transform(tokens.begin(), tokens.end(), row.data(), [](const auto& token) { return std::stod(token); });
+          rows.emplace_back(row);
+        }
+
+        Eigen::MatrixXd mat(rows.size(), rows.front().size());
+        for (int i = 0; i < rows.size(); i++) {
+          mat.row(i) = rows[i];
+        }
+
+        return mat;
+      };
+
+      // manual intrinsics
+      if (vm.count("camera_intrinsics")) {
+        std::vector<std::string> intrinsic_tokens;
+        boost::split(intrinsic_tokens, vm["camera_intrinsics"].as<std::string>(), boost::is_any_of(","));
+        intrinsics.resize(intrinsic_tokens.size());
+        std::transform(intrinsic_tokens.begin(), intrinsic_tokens.end(), intrinsics.begin(), [](const auto& token) { return std::stod(token); });
+      }
+
+      // intrinsics from file
+      if (vm.count("camera_intrinsics_file")) {
+        std::ifstream ifs(vm["camera_intrinsics_file"].as<std::string>());
+        if (!ifs.is_open()) {
+          std::cerr << vlcal::console::bold_red << "error: failed to open camera_intrinsics_file " << vm["camera_intrinsics_file"].as<std::string>() << vlcal::console::reset
+                    << std::endl;
+        } else {
+          auto mat = read_from_file(vm["camera_intrinsics_file"].as<std::string>());
+          if (mat.rows() == 1) {
+            intrinsics.resize(mat.cols());
+            std::transform(mat.data(), mat.data() + mat.size(), intrinsics.begin(), [](double val) { return val; });
+          } else if (mat.rows() == 3 && mat.cols() == 3) {
+            intrinsics = {mat(0, 0), mat(1, 1), mat(0, 2), mat(1, 2)};
+          } else {
+            std::cerr << vlcal::console::bold_red << "error: invalid camera_intrinsics_file " << vm["camera_intrinsics_file"].as<std::string>() << vlcal::console::reset
+                      << std::endl;
+            std::cerr << "expected a single row or a 3x3 matrix" << std::endl;
+            abort();
+          }
+        }
+      }
+
+      if (intrinsics.empty()) {
         std::cerr << vlcal::console::bold_red << "error: camera_intrinsics has not been set!!" << vlcal::console::reset << std::endl;
       }
-      if (!vm.count("camera_distortion_coeffs")) {
-        std::cerr << vlcal::console::bold_red << "error: camera_distortion_coeffs has not been set!!" << vlcal::console::reset << std::endl;
+
+      // manual distortion coeffs
+      if (vm.count("camera_distortion_coeffs")) {
+        std::vector<std::string> distortion_tokens;
+        boost::split(distortion_tokens, vm["camera_distortion_coeffs"].as<std::string>(), boost::is_any_of(","));
+        distortion_coeffs.resize(distortion_tokens.size());
+        std::transform(distortion_tokens.begin(), distortion_tokens.end(), distortion_coeffs.begin(), [](const auto& token) { return std::stod(token); });
       }
 
-      std::vector<std::string> intrinsic_tokens;
-      std::vector<std::string> distortion_tokens;
-      boost::split(intrinsic_tokens, vm["camera_intrinsics"].as<std::string>(), boost::is_any_of(","));
-      boost::split(distortion_tokens, vm["camera_distortion_coeffs"].as<std::string>(), boost::is_any_of(","));
+      // distortion coeffs from file
+      if (vm.count("camera_distortion_coeffs_file")) {
+        std::ifstream ifs(vm["camera_distortion_coeffs_file"].as<std::string>());
+        if (!ifs.is_open()) {
+          std::cerr << vlcal::console::bold_red << "error: failed to open camera_distortion_coeffs_file " << vm["camera_distortion_coeffs_file"].as<std::string>()
+                    << vlcal::console::reset << std::endl;
+        } else {
+          auto mat = read_from_file(vm["camera_distortion_coeffs_file"].as<std::string>());
+          if (mat.rows() == 1) {
+            distortion_coeffs.resize(mat.cols());
+            std::transform(mat.data(), mat.data() + mat.size(), distortion_coeffs.begin(), [](double val) { return val; });
+          } else {
+            std::cerr << vlcal::console::bold_red << "error: invalid camera_distortion_coeffs_file " << vm["camera_distortion_coeffs_file"].as<std::string>()
+                      << vlcal::console::reset << std::endl;
+            std::cerr << "expected a single row" << std::endl;
+            abort();
+          }
+        }
+      }
 
-      intrinsics.resize(intrinsic_tokens.size());
-      distortion_coeffs.resize(distortion_tokens.size());
-      std::transform(intrinsic_tokens.begin(), intrinsic_tokens.end(), intrinsics.begin(), [](const auto& token) { return std::stod(token); });
-      std::transform(distortion_tokens.begin(), distortion_tokens.end(), distortion_coeffs.begin(), [](const auto& token) { return std::stod(token); });
+      if (distortion_coeffs.empty()) {
+        std::cerr << vlcal::console::bold_red << "error: camera_distortion_coeffs has not been set!!" << vlcal::console::reset << std::endl;
+      }
     }
 
     return {camera_model, image_size, intrinsics, distortion_coeffs};

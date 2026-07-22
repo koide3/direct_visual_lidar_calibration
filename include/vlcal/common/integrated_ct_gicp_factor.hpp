@@ -13,7 +13,7 @@ template <typename TargetFrame = Frame, typename SourceFrame = Frame>
 class IntegratedCT_GICPFactor_ : public IntegratedCT_ICPFactor_<TargetFrame, SourceFrame> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using shared_ptr = boost::shared_ptr<IntegratedCT_GICPFactor_<TargetFrame, SourceFrame>>;
+  using shared_ptr = std::shared_ptr<IntegratedCT_GICPFactor_<TargetFrame, SourceFrame>>;
 
   /**
    * @brief Constructor
@@ -37,16 +37,12 @@ public:
    * @param target          Target point cloud
    * @param source          Source point cloud
    */
-  IntegratedCT_GICPFactor_(
-    gtsam::Key source_t0_key,
-    gtsam::Key source_t1_key,
-    const std::shared_ptr<const TargetFrame>& target,
-    const std::shared_ptr<const SourceFrame>& source);
+  IntegratedCT_GICPFactor_(gtsam::Key source_t0_key, gtsam::Key source_t1_key, const std::shared_ptr<const TargetFrame>& target, const std::shared_ptr<const SourceFrame>& source);
 
   virtual ~IntegratedCT_GICPFactor_() override;
 
   virtual double error(const gtsam::Values& values) const override;
-  virtual boost::shared_ptr<gtsam::GaussianFactor> linearize(const gtsam::Values& values) const override;
+  virtual std::shared_ptr<gtsam::GaussianFactor> linearize(const gtsam::Values& values) const override;
 
 protected:
   virtual void update_correspondences() const override;

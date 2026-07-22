@@ -94,7 +94,7 @@ double IntegratedCT_ICPFactor_<TargetFrame, SourceFrame>::error(const gtsam::Val
 }
 
 template <typename TargetFrame, typename SourceFrame>
-boost::shared_ptr<gtsam::GaussianFactor> IntegratedCT_ICPFactor_<TargetFrame, SourceFrame>::linearize(const gtsam::Values& values) const {
+std::shared_ptr<gtsam::GaussianFactor> IntegratedCT_ICPFactor_<TargetFrame, SourceFrame>::linearize(const gtsam::Values& values) const {
   if (!frame::has_normals(*target)) {
     std::cerr << "error: target cloud doesn't have normals!!" << std::endl;
     abort();
