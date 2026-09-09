@@ -21,10 +21,15 @@ else()
 endif()
 
 find_package(PCL REQUIRED)
-find_package(Ceres REQUIRED)
+find_package(Ceres 2.1 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options date_time)
+if($ENV{ROS_VERSION} EQUAL 2)
+  # Iridescence exports glfw as a link dependency. Resolve its imported target
+  # explicitly, including when GLFW is in this workspace's isolated prefix.
+  find_package(glfw3 REQUIRED)
+endif()
 find_package(Iridescence REQUIRED)
 
 set(OLD_DISTRO "humble;galactic;foxy")
@@ -179,6 +184,19 @@ install(
   lib/${PROJECT_NAME}
 )
 
+install(PROGRAMS scripts/calibrate_dual_mei.py scripts/visualize_dual_mei.py DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY scripts/dual_mei DESTINATION lib/${PROJECT_NAME} FILES_MATCHING PATTERN "*.py" PATTERN "__pycache__" EXCLUDE)
+install(FILES scripts/static_bag_input.py scripts/mei_calibration_geometry.py DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
+
+option(BUILD_STATIC_MEI_TESTS "Build MEI projection and visibility regression checks" OFF)
+if(BUILD_STATIC_MEI_TESTS)
+  enable_testing()
+  add_executable(mei_validation src/test/mei_validation.cpp)
+  target_link_libraries(mei_validation direct_visual_lidar_calibration)
+  add_test(NAME mei_validation COMMAND mei_validation)
+endif()
+
 if($ENV{ROS_VERSION} EQUAL 1)
   # ROS1
 else()
@@ -186,5 +204,9 @@ else()
   ament_python_install_package(${PROJECT_NAME})
   install(PROGRAMS scripts/find_matches_superglue.py DESTINATION lib/${PROJECT_NAME})
   ament_export_libraries(direct_visual_lidar_calibration)
+  # Export the workspace-local runtime dependencies for normal install/setup users.
+  get_filename_component(DUAL_MEI_WORKSPACE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+  configure_file(env-hooks/dual_mei_deps.dsv.in ${CMAKE_CURRENT_BINARY_DIR}/dual_mei_deps.dsv @ONLY)
+  ament_environment_hooks(${CMAKE_CURRENT_BINARY_DIR}/dual_mei_deps.dsv)
   ament_auto_package()
 endif()

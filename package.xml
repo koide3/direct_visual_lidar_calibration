@@ -10,12 +10,22 @@
 
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake_auto</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake_python</buildtool_depend>
   
   <depend condition="$ROS_VERSION == 1">roscpp</depend>
   <depend condition="$ROS_VERSION == 1">rosbag</depend>
   <depend condition="$ROS_VERSION == 2">rclcpp</depend>
   <depend condition="$ROS_VERSION == 2">rosbag2_cpp</depend>
+  <depend condition="$ROS_VERSION == 2">rosbag2_storage</depend>
+  <exec_depend condition="$ROS_VERSION == 2">rosbag2_py</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">rosbag2_storage_default_plugins</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">rclpy</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">rosidl_runtime_py</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
 
   <depend>fmt</depend>
   <depend>cv_bridge</depend>

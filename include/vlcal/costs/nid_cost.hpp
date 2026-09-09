@@ -35,6 +35,9 @@ public:
 
   template <typename T>
   bool operator()(const T* T_camera_lidar_params, T* residual) const {
+    if (!proj || !points || !points->points || !points->intensities || bins < 2 || normalized_image.empty() || normalized_image.type() != CV_64FC1) {
+      return false;
+    }
     const Eigen::Map<Sophus::SE3<T> const> T_camera_lidar(T_camera_lidar_params);
 
     Eigen::Matrix<T, -1, -1> hist = Eigen::Matrix<T, -1, -1>::Zero(bins, bins);
@@ -46,9 +49,19 @@ public:
     for (int i = 0; i < points->size(); i++) {
       const Eigen::Matrix<T, 3, 1> pt_camera = T_camera_lidar * points->points[i].head<3>();
       const double intensity = points->intensities[i];
-      const int bin_points = std::max<int>(0, std::min<int>(bins - 1, intensity * bins));
+      const Eigen::Vector3d real_point(get_real(pt_camera.x()), get_real(pt_camera.y()), get_real(pt_camera.z()));
+      if (!std::isfinite(intensity) || !proj->is_valid(real_point)) {
+        continue;
+      }
+      const int bin_points = std::min<int>(bins - 1, std::clamp(intensity, 0.0, 1.0) * bins);
 
       const Eigen::Matrix<T, 2, 1> projected = (*proj)(pt_camera);
+      const Eigen::Vector2d real_projected(get_real(projected.x()), get_real(projected.y()));
+      // NID samples all sixteen floor(pixel)+[-1,2] neighbours. Checking
+      // before the integer conversion also excludes NaN/Inf projections.
+      if (!proj->is_pixel_valid(real_projected, normalized_image.cols, normalized_image.rows, 1, 2)) {
+        continue;
+      }
       const Eigen::Vector2i knot_i(std::floor(get_real(projected[0])), std::floor(get_real(projected[1])));
       const Eigen::Matrix<T, 2, 1> s = projected - knot_i.cast<double>();
 
@@ -76,7 +89,10 @@ public:
         for (int j = 0; j < 4; j++) {
           const T w = beta(i, 0) * beta(j, 1);
           const double pix = normalized_image.at<double>(knots_y[j], knots_x[i]);
-          const int bin_image = std::min<int>(pix * bins, bins - 1);
+          if (!std::isfinite(pix)) {
+            return false;
+          }
+          const int bin_image = std::min<int>(std::clamp(pix, 0.0, 1.0) * bins, bins - 1);
           hist(bin_image, bin_points) += w;
           hist_image[bin_image] += w;
         }
@@ -84,6 +100,9 @@ public:
     }
 
     const double sum = hist_points.sum();
+    if (!std::isfinite(sum) || sum <= 0.0) {
+      return false;
+    }
 
     hist_image = hist_image / sum;
     hist_points = hist_points / sum;
@@ -92,6 +111,9 @@ public:
     const T H_image = -(hist_image.array() * (hist_image.array() + 1e-6).log()).sum();
     const double H_points = -(hist_points.array() * (hist_points.array() + 1e-6).log()).sum();
     const T H_image_points = -(hist.array() * (hist.array() + 1e-6).log()).sum();
+    if (get_real(H_image) <= 1e-8 || H_points <= 1e-8 || get_real(H_image_points) <= 1e-8) {
+      return false;
+    }
     const T MI = H_image + H_points - H_image_points;
     const T NID = (H_image_points - MI) / H_image_points;
 
