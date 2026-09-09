@@ -8,7 +8,7 @@
 
 ```zsh
 ssh bling
-cd /home/chenyu/ws_chenyu/recon/Fast-Dual360/direct_visual_lidar_calibration_ros2_ws
+cd /home/chenyu/ws_chenyu/recon/Fast-Dual360/direct_visual_lidar_calibration_ws
 source src/direct_visual_lidar_calibration/scripts/setup_ros2.zsh
 
 CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build \
@@ -215,7 +215,9 @@ ros2 run direct_visual_lidar_calibration calibrate_dual_mei.py --help
 ros2 run direct_visual_lidar_calibration visualize_dual_mei.py --help
 ```
 
-2026-09-09 本次 Git 纳管前实跑：colcon 增量构建通过；原生 mei_validation 1/1 通过；Python 测试 63 项通过；两个安装入口帮助命令通过。本次没有重跑完整真实数据标定，也没有重建第三方依赖。
+2026-09-09 本次提交到 Git 前实跑：colcon 增量构建通过；原生 mei_validation 1/1 通过；Python 测试 63 项通过；两个安装入口帮助命令通过。本次没有重跑完整真实数据标定，也没有重建第三方依赖。
+
+同日工作空间更名后，已在新目录重新生成主项目 build/install：完整构建通过，63 项 Python 测试与原生 MEI 检查通过，两个安装入口正常，install 中无失效符号链接；第三方依赖安装继续复用。
 
 `test_*.py` 使用自动生成的小数据执行回归；`verify_*.py` 是历史真实数据验收脚本，部分依赖本地数据路径及 `.task_artifacts`，不属于 clone 后可无数据直接执行的通用测试。
 
