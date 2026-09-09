@@ -1,0 +1,73 @@
+# 仅 bag：从 bag 提取 LiDAR、IMU 与两路图像。
+# 相对路径以本 YAML 所在目录为准。未写出的高级参数使用程序默认值。
+# 相机参数中的 null 须替换为实际标定值；可选字段的 null 含义见配置说明。
+schema_version: 2
+input:
+  mode: bag_only
+  bag_path: ./bag
+  lidar_topic: /livox/lidar
+  imu_topic: /livox/imu
+  lidar_frame: livox_frame
+  images:
+    cam0:
+      topic: /cam0/image_raw/compressed
+    cam1:
+      topic: /cam1/image_raw/compressed
+image_selection:
+  target_offset_sec: null
+  max_pair_delta_sec: 0.0
+# 固定静止时长；程序验证此区间，不自动探测最长静止段。
+static:
+  duration_sec: 1.0
+  backend: auto
+  pointcloud_time_field: timestamp
+  pointcloud_time_unit: ns
+  pointcloud_time_reference: absolute
+  acceleration_scale: 9.80665
+  min_range_m: 1.0
+  max_range_m: 100.0
+# 进入优化前的点云体素大小，单位米。
+pointcloud:
+  voxel_size_m: 0.02
+# MEI 内参须对应输入分辨率；T_cam_lidar: LiDAR → camera，平移单位米。
+cameras:
+  cam0:
+    model: mei
+    width: null
+    height: null
+    fx: null
+    fy: null
+    cx: null
+    cy: null
+    xi: null
+    distortion: {k1: null, k2: null, k3: null, p1: null, p2: null}
+    max_theta_deg: 95.0
+    T_cam_lidar:
+      - [null, null, null, null]
+      - [null, null, null, null]
+      - [null, null, null, null]
+      - [0.0, 0.0, 0.0, 1.0]
+  cam1:
+    model: mei
+    width: null
+    height: null
+    fx: null
+    fy: null
+    cx: null
+    cy: null
+    xi: null
+    distortion: {k1: null, k2: null, k3: null, p1: null, p2: null}
+    max_theta_deg: 95.0
+    T_cam_lidar:
+      - [null, null, null, null]
+      - [null, null, null, null]
+      - [null, null, null, null]
+      - [0.0, 0.0, 0.0, 1.0]
+# 输出目录须不存在或为空。
+output:
+  directory: ./result
+# 仅影响投影显示；完整字段见 ../docs/dual_mei_configuration_zh.md。
+# 运行方式见 ../docs/dual_mei_static_zh.md。
+visualization:
+  point_radius_px: 3
+  alpha: 0.8

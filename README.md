@@ -1,5 +1,11 @@
 # direct_visual_lidar_calibration
 
+本 fork 包含 Fast-Dual360 的双 MEI 鱼眼外参求精扩展：从 ROS1/ROS2 bag 的开头固定静止段准备点云，基于已知内参和可靠外参初值分别求精 LiDAR → cam0/cam1，并提供结果查看器。
+
+[双 MEI 功能与用法](docs/dual_mei_static_zh.md) · [YAML 配置说明](docs/dual_mei_configuration_zh.md) · [编译与使用指南](docs/build_and_usage_zh.md)
+
+以下保留上游工具箱介绍及原始工作引用。
+
 This package provides a toolbox for LiDAR-camera calibration that is: 
 
 - **Generalizable**: It can handle various LiDAR and camera projection models including spinning and non-repetitive scan LiDARs, and pinhole, fisheye, and omnidirectional projection cameras.

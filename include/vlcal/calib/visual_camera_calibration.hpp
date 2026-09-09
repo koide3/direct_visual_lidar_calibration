@@ -1,5 +1,10 @@
 #pragma once
 
+#include <functional>
+#include <limits>
+#include <string>
+#include <vector>
+
 #include <camera/generic_camera_base.hpp>
 #include <vlcal/common/visual_lidar_data.hpp>
 
@@ -38,6 +43,20 @@ public:
   double nelder_mead_convergence_criteria;
 
   std::function<void(const Eigen::Isometry3d& T_camera_lidar)> callback;
+  // Optional text sink. The library never creates a viewer; without a sink it logs to stdout.
+  std::function<void(const std::string&)> log_callback;
+};
+
+struct VisualCameraCalibrationDiagnostics {
+  bool success = false;
+  bool converged = false;
+  bool inner_converged = false;
+  int outer_iterations = 0;
+  int inner_iterations = 0;
+  double initial_cost = std::numeric_limits<double>::quiet_NaN();
+  double final_cost = std::numeric_limits<double>::quiet_NaN();
+  std::string termination_reason;
+  std::vector<std::size_t> visible_points;
 };
 
 class VisualCameraCalibration {
@@ -45,8 +64,10 @@ public:
   VisualCameraCalibration(const camera::GenericCameraBase::ConstPtr& proj, const std::vector<VisualLiDARData::ConstPtr>& dataset, const VisualCameraCalibrationParams& params = VisualCameraCalibrationParams());
 
   Eigen::Isometry3d calibrate(const Eigen::Isometry3d& init_T_camera_lidar);
+  const VisualCameraCalibrationDiagnostics& diagnostics() const { return diagnostics_; }
 
 private:
+  void log(const std::string& message) const;
   Eigen::Isometry3d estimate_pose_nelder_mead(const Eigen::Isometry3d& init_T_camera_lidar);
   Eigen::Isometry3d estimate_pose_bfgs(const Eigen::Isometry3d& init_T_camera_lidar);
 
@@ -55,6 +76,7 @@ private:
 
   const camera::GenericCameraBase::ConstPtr proj;
   const std::vector<VisualLiDARData::ConstPtr> dataset;
+  VisualCameraCalibrationDiagnostics diagnostics_;
 };
 
 }  // namespace vlcal

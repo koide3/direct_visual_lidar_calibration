@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <iostream>
+#include <cmath>
+#include <limits>
 #include <Eigen/Core>
 #include <camera/traits.hpp>
 
@@ -22,6 +24,25 @@ public:
 
   GenericCameraBase() {}
   virtual ~GenericCameraBase() {}
+
+  // Geometry checks run on the real values before projection, including for
+  // autodiff costs. A camera may see rays with negative optical z.
+  virtual bool is_valid(const Eigen::Vector3d& point) const {
+    if (!point.allFinite()) {
+      return false;
+    }
+    const double norm = point.stableNorm();
+    return std::isfinite(norm) && norm > 1e-12;
+  }
+
+  // Check the complete floor(pixel)+[-before,+after] sampling footprint.
+  virtual bool is_pixel_valid(const Eigen::Vector2d& pixel, int width, int height, int before = 0, int after = 0) const {
+    return pixel.allFinite() && before >= 0 && after >= 0 && width > before + after && height > before + after &&
+           pixel.x() >= before && pixel.y() >= before && pixel.x() < width - after && pixel.y() < height - after;
+  }
+
+  // NaN means callers should retain the legacy estimated field of view.
+  virtual double max_theta_rad() const { return std::numeric_limits<double>::quiet_NaN(); }
 
   /**
    * @brief Project a 3D point into the image space

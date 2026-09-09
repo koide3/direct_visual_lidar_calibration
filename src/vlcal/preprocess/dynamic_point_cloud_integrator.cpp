@@ -134,6 +134,10 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
 
     double last_t = -1.0;
     gtsam::Pose3 T_odom_lidar = T_odom_lidar_begin;
+    // Pose3::interpolateRt was added after GTSAM 4.0.x.  Interpolate on SE(3)
+    // with APIs available in both GTSAM 4.0.3 and newer releases instead.
+    const gtsam::Vector6 v_begin_end =
+      gtsam::Pose3::Logmap(T_odom_lidar_begin.between(T_odom_lidar_end));
 
     const double time_eps = 1e-4;
     for (int i = 0; i < raw_points->size(); i++) {
@@ -141,7 +145,7 @@ void DynamicPointCloudIntegrator::voxelgrid_task() {
 
       if (t - last_t > time_eps) {
         last_t = t;
-        T_odom_lidar = T_odom_lidar_begin.interpolateRt(T_odom_lidar_end, t);
+        T_odom_lidar = T_odom_lidar_begin * gtsam::Pose3::Expmap(t * v_begin_end);
       }
 
       const Eigen::Vector4d pt = T_odom_lidar.matrix() * raw_points->points[i];

@@ -42,16 +42,17 @@ std::vector<int> ViewCulling::view_culling(const std::vector<int>& point_indices
 
   for (int i = 0; i < points_camera.size(); i++) {
     const auto& pt_camera = points_camera[i];
-    if (pt_camera.normalized().head<3>().z() < min_z) {
+    if (!proj->is_valid(pt_camera.head<3>()) || pt_camera.head<3>().normalized().z() < min_z - 1e-12) {
       // Out of FoV
       continue;
     }
 
-    const Eigen::Vector2i pt_2d = proj->project(pt_camera.head<3>()).cast<int>();
-    if ((pt_2d.array() < Eigen::Array2i::Zero()).any() || (pt_2d.array() >= image_size.array()).any()) {
+    const Eigen::Vector2d projected = proj->project(pt_camera.head<3>());
+    if (!proj->is_pixel_valid(projected, image_size.x(), image_size.y())) {
       // Out of image
       continue;
     }
+    const Eigen::Vector2i pt_2d = projected.cast<int>();
 
     indices.emplace_back(point_indices[i]);
     projected_points.emplace_back(pt_2d);

@@ -34,6 +34,10 @@ Eigen::Vector3d estimate_direction(const camera::GenericCameraBase::ConstPtr& pr
 }
 
 double estimate_camera_fov(const camera::GenericCameraBase::ConstPtr& proj, const Eigen::Vector2i& image_size) {
+  const double configured_fov = proj->max_theta_rad();
+  if (std::isfinite(configured_fov)) {
+    return configured_fov;
+  }
   const std::vector<Eigen::Vector2d> target_corners = {Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(image_size[0] / 2, 0.0), Eigen::Vector2d(0.0, image_size[1] / 2)};
 
   // Transform points into the bearing vectors and find the maximum view angle from them
